@@ -374,3 +374,260 @@ body {
 .result-actions {
     text-align: center;
 }
+
+/* Character Counter */
+.char-counter {
+    text-align: right;
+    margin-top: 0.25rem;
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+/* Loading Animation */
+.loading-animation {
+    text-align: center;
+    padding: 2rem;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    margin: 2rem 0;
+}
+
+.emoji-loader {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.emoji-bounce {
+    font-size: 2rem;
+    animation: bounceEmoji 1.5s ease-in-out infinite;
+}
+
+.emoji-bounce:nth-child(2) {
+    animation-delay: 0.3s;
+}
+
+.emoji-bounce:nth-child(3) {
+    animation-delay: 0.6s;
+}
+
+@keyframes bounceEmoji {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-20px); }
+}
+
+.loading-text {
+    color: #495057;
+    font-weight: 500;
+    margin: 0;
+}
+
+.loading-spinner {
+    display: inline-block;
+}
+
+.spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid #ffffff40;
+    border-top: 2px solid #ffffff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+/* Dynamic Emoji Visualization */
+.emoji-visualization {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    position: relative;
+}
+
+.emoji-display {
+    position: relative;
+    display: inline-block;
+    padding: 1rem;
+}
+
+.emoji-main {
+    font-size: 4rem;
+    animation: emojiPulse 2s ease-in-out infinite;
+}
+
+.emoji-particles {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+}
+
+.particle {
+    position: absolute;
+    font-size: 1.5rem;
+    animation: particleFloat 3s ease-in-out infinite;
+}
+
+.emoji-display.positive .particle:nth-child(1) {
+    top: -30px;
+    left: -20px;
+    animation-delay: 0s;
+}
+
+.emoji-display.positive .particle:nth-child(2) {
+    top: -20px;
+    right: -30px;
+    animation-delay: 1s;
+}
+
+.emoji-display.positive .particle:nth-child(3) {
+    bottom: -30px;
+    left: 0;
+    animation-delay: 2s;
+}
+
+.emoji-display.negative .particle:nth-child(1) {
+    top: -25px;
+    left: -25px;
+    animation-delay: 0.5s;
+}
+
+.emoji-display.negative .particle:nth-child(2) {
+    top: -30px;
+    right: -20px;
+    animation-delay: 1.5s;
+}
+
+.emoji-display.negative .particle:nth-child(3) {
+    bottom: -25px;
+    right: -25px;
+    animation-delay: 2.5s;
+}
+
+@keyframes emojiPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+@keyframes particleFloat {
+    0%, 100% { 
+        opacity: 0;
+        transform: translateY(0) scale(0.8);
+    }
+    50% { 
+        opacity: 1;
+        transform: translateY(-15px) scale(1);
+    }
+}
+
+/* Enhanced Confidence Bar */
+.confidence-bar {
+    width: 100%;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+}
+
+.confidence-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ffffff80, #ffffff);
+    border-radius: 4px;
+    transition: width 0.8s ease-in-out;
+    animation: fillAnimation 1s ease-out;
+}
+
+@keyframes fillAnimation {
+    from { width: 0%; }
+}
+
+/* Mini Trend Chart */
+.mini-trend-chart {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-top: 1rem;
+}
+
+.mini-trend-chart h6 {
+    color: #495057;
+    margin-bottom: 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.trend-bars {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+}
+
+.trend-bar {
+    flex: 1;
+    max-width: 100px;
+    text-align: center;
+}
+
+.bar-fill {
+    height: 40px;
+    border-radius: 4px;
+    margin-bottom: 0.5rem;
+    transition: height 0.8s ease-in-out;
+    position: relative;
+    overflow: hidden;
+}
+
+.trend-bar.positive .bar-fill {
+    background: linear-gradient(180deg, #28a745, #20c997);
+}
+
+.trend-bar.negative .bar-fill {
+    background: linear-gradient(180deg, #dc3545, #e74c3c);
+}
+
+.bar-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}
+
+.bar-label {
+    font-size: 0.75rem;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+/* Enhanced Button Loading State */
+#analyzeBtn.loading .btn-text {
+    opacity: 0;
+}
+
+#analyzeBtn.loading .loading-spinner {
+    display: inline-block;
+}
+
+/* Quick Copy Animation */
+.btn.copied {
+    background-color: #28a745 !important;
+    border-color: #28a745 !important;
+    color: white !important;
+    animation: copySuccess 0.3s ease-in-out;
+}
+
+@keyframes copySuccess {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}

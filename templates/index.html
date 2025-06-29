@@ -94,7 +94,7 @@
                     {% endwith %}
                     
                     <!-- Comment Input Form -->
-                    <form method="POST" action="{{ url_for('analyze') }}" class="sentiment-form">
+                    <form method="POST" action="{{ url_for('analyze') }}" class="sentiment-form" id="sentimentForm">
                         <div class="mb-3">
                             <label for="comment" class="form-label">Masukan Komentar</label>
                             <textarea 
@@ -104,29 +104,96 @@
                                 rows="4" 
                                 placeholder="Ketik komentar Anda di sini..."
                                 required>{{ comment if comment else '' }}</textarea>
+                            <div class="char-counter">
+                                <span id="charCount">0</span>/500 karakter
+                            </div>
                         </div>
                         
-                        <button type="submit" class="btn btn-secondary ok-btn mb-4">OK</button>
+                        <button type="submit" class="btn btn-secondary ok-btn mb-4" id="analyzeBtn">
+                            <span class="btn-text">OK</span>
+                            <div class="loading-spinner" style="display: none;">
+                                <div class="spinner"></div>
+                            </div>
+                        </button>
                     </form>
+                    
+                    <!-- Loading Animation -->
+                    <div class="loading-animation" id="loadingAnimation" style="display: none;">
+                        <div class="emoji-loader">
+                            <div class="emoji-bounce">😊</div>
+                            <div class="emoji-bounce">😐</div>
+                            <div class="emoji-bounce">😢</div>
+                        </div>
+                        <p class="loading-text">Menganalisis sentimen...</p>
+                    </div>
                     
                     <!-- Results Display -->
                     {% if show_result and sentiment_result %}
-                    <div class="results-container">
-                        <div class="sentiment-result {% if sentiment_result == 'Positif' %}sentiment-positive{% elif sentiment_result == 'Negatif' %}sentiment-negative{% else %}sentiment-neutral{% endif %}">
+                    <div class="results-container animate__animated animate__fadeInUp">
+                        <!-- Dynamic Emoji Visualization -->
+                        <div class="emoji-visualization">
+                            {% if sentiment_result == 'Positif' %}
+                                <div class="emoji-display positive">
+                                    <div class="emoji-main">😊</div>
+                                    <div class="emoji-particles">
+                                        <span class="particle">✨</span>
+                                        <span class="particle">💖</span>
+                                        <span class="particle">🌟</span>
+                                    </div>
+                                </div>
+                            {% elif sentiment_result == 'Negatif' %}
+                                <div class="emoji-display negative">
+                                    <div class="emoji-main">😢</div>
+                                    <div class="emoji-particles">
+                                        <span class="particle">💔</span>
+                                        <span class="particle">😞</span>
+                                        <span class="particle">⚡</span>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="sentiment-result {% if sentiment_result == 'Positif' %}sentiment-positive{% elif sentiment_result == 'Negatif' %}sentiment-negative{% endif %}">
                             <div class="sentiment-text">{{ sentiment_result }}</div>
                             {% if confidence_score %}
                                 <div class="confidence-score">
+                                    <div class="confidence-bar">
+                                        <div class="confidence-fill" style="width: {{ confidence_score * 100 }}%"></div>
+                                    </div>
                                     <small>Confidence: {{ "%.1f"|format(confidence_score * 100) }}%</small>
                                 </div>
                             {% endif %}
                         </div>
-                        {% if session.username %}
-                            <div class="result-actions mt-3">
+
+                        <!-- Quick Copy and Actions -->
+                        <div class="result-actions mt-3">
+                            <button class="btn btn-outline-primary btn-sm" onclick="quickCopy('{{ comment|replace("'", "\\'") }}', 'comment')">
+                                <i class="fas fa-copy me-1"></i>Copy Komentar
+                            </button>
+                            <button class="btn btn-outline-secondary btn-sm" onclick="quickCopy('{{ sentiment_result }}', 'result')">
+                                <i class="fas fa-tag me-1"></i>Copy Hasil
+                            </button>
+                            {% if session.username %}
                                 <a href="{{ url_for('hasil_klasifikasi') }}" class="btn btn-outline-success btn-sm">
                                     <i class="fas fa-chart-line me-1"></i>Lihat Semua Hasil
                                 </a>
+                            {% endif %}
+                        </div>
+
+                        <!-- Mini Trend Chart -->
+                        <div class="mini-trend-chart mt-3">
+                            <h6>Tren Analisis Terbaru</h6>
+                            <div class="trend-bars">
+                                <div class="trend-bar positive" data-sentiment="positive">
+                                    <div class="bar-fill"></div>
+                                    <span class="bar-label">Positif</span>
+                                </div>
+                                <div class="trend-bar negative" data-sentiment="negative">
+                                    <div class="bar-fill"></div>
+                                    <span class="bar-label">Negatif</span>
+                                </div>
                             </div>
-                        {% endif %}
+                        </div>
                     </div>
                     {% endif %}
                 </div>

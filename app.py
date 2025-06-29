@@ -120,14 +120,13 @@ def analyze_sentiment(text):
     positive_count = sum(1 for keyword in positive_keywords if keyword in text_lower)
     negative_count = sum(1 for keyword in negative_keywords if keyword in text_lower)
     
-    if positive_count > negative_count:
-        confidence = min(0.6 + (positive_count * 0.1), 0.95)
-        return 'Positif', confidence
-    elif negative_count > positive_count:
-        confidence = min(0.6 + (negative_count * 0.1), 0.95)
+    # Remove neutral predictions - default to positive if no clear negative sentiment
+    if negative_count > positive_count:
+        confidence = min(0.65 + (negative_count * 0.1), 0.95)
         return 'Negatif', confidence
     else:
-        return 'Netral', 0.5
+        confidence = min(0.65 + (positive_count * 0.1), 0.95)
+        return 'Positif', confidence
 
 def get_emotion_from_sentiment(sentiment):
     """Map sentiment to emotion"""

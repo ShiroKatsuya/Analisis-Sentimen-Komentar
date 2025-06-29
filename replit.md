@@ -86,10 +86,19 @@ The current setup is optimized for development and demonstration purposes. For p
 
 ## Recent Changes
 
+- June 29, 2025: Enhanced main sentiment analysis page with advanced features
+  - Removed neutral sentiment predictions (only Positif/Negatif)
+  - Added dynamic emoji-based sentiment visualizations with floating particles
+  - Implemented loading animations with bouncing emojis during analysis
+  - Created color-coded sentiment trend charts with shimmer effects
+  - Added quick copy functionality for comments and results with toast notifications
+  - Enhanced confidence scoring with animated progress bars
+  - Added character counter with color-coded warnings
+- June 29, 2025: Connected sentiment analysis data flow from main page to classification results
+- June 29, 2025: Fixed JavaScript errors and implemented real-time interactions
 - June 29, 2025: Added Classification Results page with table interface
 - June 29, 2025: Implemented Data Training page with search and import functionality
 - June 29, 2025: Connected dashboard navigation to all main pages
-- June 29, 2025: Added comprehensive table interactions (search, filter, export, bulk actions)
 
 ## Changelog
 
