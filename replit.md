@@ -6,24 +6,29 @@ Arianalyze is a web-based sentiment analysis application built with Flask that a
 
 ## System Architecture
 
-The application follows a simple monolithic web architecture pattern:
+The application follows a monolithic web architecture pattern with database integration:
 
 - **Frontend**: HTML templates with Bootstrap 5 CSS framework and vanilla JavaScript
 - **Backend**: Flask web framework serving both static content and API endpoints
-- **Session Management**: Flask sessions with configurable secret key
-- **Development Setup**: Simple Python Flask server with debug mode enabled
+- **Database**: PostgreSQL with SQLAlchemy ORM for data persistence
+- **Session Management**: Flask sessions with database-backed user authentication
+- **Development Setup**: Flask server with Gunicorn and database connectivity
 
-The architecture is designed for simplicity and ease of deployment, making it suitable for prototyping and demonstration purposes.
+The architecture supports user registration, authentication, and persistent storage of sentiment analysis results.
 
 ## Key Components
 
 ### Backend Components
-- **app.py**: Main Flask application with route handlers
+- **app.py**: Main Flask application with route handlers and database integration
 - **main.py**: Application entry point and server initialization
+- **models.py**: SQLAlchemy database models for users, comments, and analytics
 - Routes:
   - `/` - Main page serving the sentiment analysis interface
-  - `/analyze` (POST) - Handles comment submission and returns mock sentiment results
-  - `/login` - Placeholder login page with redirect functionality
+  - `/analyze` (POST) - Handles comment submission and stores results in database
+  - `/login` - User login page with authentication
+  - `/register` - User registration functionality
+  - `/logout` - User logout and session cleanup
+  - `/dashboard` - User dashboard showing comment history
 
 ### Frontend Components
 - **templates/index.html**: Main user interface template with responsive design
