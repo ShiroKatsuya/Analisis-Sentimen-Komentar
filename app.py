@@ -29,8 +29,21 @@ def analyze():
 
 @app.route('/login')
 def login():
-    """Login page placeholder"""
-    flash('Login functionality not implemented in this demo.', 'info')
+    """Login page"""
+    return render_template('login.html')
+
+@app.route('/login', methods=['POST'])
+def login_post():
+    """Handle login form submission (frontend only)"""
+    username = request.form.get('username', '').strip()
+    password = request.form.get('password', '').strip()
+    
+    if not username or not password:
+        flash('Silakan masukkan username dan password.', 'warning')
+        return render_template('login.html')
+    
+    # For frontend demo - show success message and redirect
+    flash('Login berhasil! (Demo mode)', 'success')
     return redirect(url_for('index'))
 
 if __name__ == '__main__':

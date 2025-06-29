@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Arianalyze</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+</head>
+<body class="login-page">
+    <!-- Main Content -->
+    <div class="container-fluid">
+        <div class="row min-vh-100 align-items-center">
+            <!-- Left Side - Illustration -->
+            <div class="col-lg-6 d-none d-lg-block">
+                <div class="login-illustration-container">
+                    <!-- Phone mockup with security theme -->
+                    <div class="login-phone-mockup">
+                        <div class="phone-screen">
+                            <div class="phone-header">
+                                <div class="profile-icon">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                            </div>
+                            <div class="phone-content">
+                                <div class="content-line"></div>
+                                <div class="content-line short"></div>
+                                <div class="content-line"></div>
+                                <div class="content-dots">
+                                    <span>•••••••</span>
+                                </div>
+                                <div class="content-button"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Security lock icon -->
+                    <div class="security-lock">
+                        <div class="lock-body">
+                            <div class="lock-shackle"></div>
+                            <div class="lock-keyhole"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Character illustration -->
+                    <div class="login-character">
+                        <div class="character-body"></div>
+                        <div class="character-head"></div>
+                        <div class="character-hair"></div>
+                        <div class="character-arm left"></div>
+                        <div class="character-arm right"></div>
+                    </div>
+                    
+                    <!-- Decorative plant -->
+                    <div class="decorative-plant">
+                        <div class="plant-stem"></div>
+                        <div class="plant-leaf leaf-1"></div>
+                        <div class="plant-leaf leaf-2"></div>
+                        <div class="plant-leaf leaf-3"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Side - Login Form -->
+            <div class="col-lg-6">
+                <div class="login-form-container">
+                    <div class="login-form-wrapper">
+                        <!-- Brand Title -->
+                        <h1 class="login-title">Arianalyze</h1>
+                        
+                        <!-- Flash Messages -->
+                        {% with messages = get_flashed_messages(with_categories=true) %}
+                            {% if messages %}
+                                {% for category, message in messages %}
+                                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                                        {{ message }}
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                        {% endwith %}
+                        
+                        <!-- Login Form -->
+                        <form method="POST" action="{{ url_for('login_post') }}" class="login-form">
+                            <div class="mb-3">
+                                <label for="username" class="form-label">Username</label>
+                                <input 
+                                    type="text" 
+                                    class="form-control login-input" 
+                                    id="username" 
+                                    name="username" 
+                                    placeholder="Masukan Username"
+                                    required>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label for="password" class="form-label">Password</label>
+                                <input 
+                                    type="password" 
+                                    class="form-control login-input" 
+                                    id="password" 
+                                    name="password" 
+                                    placeholder="Masukan Password"
+                                    required>
+                            </div>
+                            
+                            <button type="submit" class="btn login-btn w-100">Login</button>
+                        </form>
+                        
+                        <!-- Back to Home Link -->
+                        <div class="back-to-home mt-4 text-center">
+                            <a href="{{ url_for('index') }}" class="text-muted">
+                                <i class="fas fa-arrow-left me-2"></i>Kembali ke Beranda
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JS -->
+    <script src="{{ url_for('static', filename='js/login.js') }}"></script>
+</body>
+</html>
