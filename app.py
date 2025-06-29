@@ -109,7 +109,7 @@ def login_post():
             session['session_token'] = session_token
             
             flash(f'Selamat datang, {user.username}!', 'success')
-            return redirect(url_for('index'))
+            return redirect(url_for('dashboard'))
         except Exception as e:
             db.session.rollback()
             flash('Terjadi kesalahan saat login.', 'error')
@@ -180,16 +180,27 @@ def logout():
 
 @app.route('/dashboard')
 def dashboard():
-    """User dashboard showing their comment history"""
-    from models import Comment
+    """User dashboard showing statistics and comment history"""
+    from models import Comment, db
+    from sqlalchemy import func
     
     if 'user_id' not in session:
         flash('Silakan login terlebih dahulu.', 'warning')
         return redirect(url_for('login'))
     
+    # Get user's comment statistics
     user_comments = Comment.query.filter_by(user_id=session['user_id']).order_by(Comment.created_at.desc()).limit(20).all()
     
-    return render_template('index.html', user_comments=user_comments, show_dashboard=True)
+    # Calculate statistics
+    total_comments = Comment.query.filter_by(user_id=session['user_id']).count()
+    positive_comments = Comment.query.filter_by(user_id=session['user_id'], sentiment_result='Positif').count()
+    negative_comments = Comment.query.filter_by(user_id=session['user_id'], sentiment_result='Negatif').count()
+    
+    return render_template('dashboard.html', 
+                         user_comments=user_comments,
+                         total_comments=total_comments,
+                         positive_comments=positive_comments,
+                         negative_comments=negative_comments)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

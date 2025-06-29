@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Arianalyze</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+</head>
+<body class="dashboard-page">
+    <!-- Header Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white py-3 shadow-sm">
+        <div class="container-fluid">
+            <a class="navbar-brand d-flex align-items-center" href="{{ url_for('dashboard') }}">
+                <div class="logo-circle me-2">
+                    <i class="fas fa-circle text-success"></i>
+                    <i class="fas fa-circle text-success ms-1"></i>
+                </div>
+                <span class="brand-text">Arianalyze</span>
+            </a>
+            
+            <div class="navbar-nav ms-auto d-flex align-items-center">
+                <div class="admin-profile d-flex align-items-center">
+                    <span class="admin-text me-2">Admin</span>
+                    <div class="profile-avatar">
+                        <img src="https://via.placeholder.com/32/28a745/ffffff?text=A" alt="Admin" class="rounded-circle">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Dashboard Layout -->
+    <div class="dashboard-container">
+        <div class="row g-0">
+            <!-- Sidebar Navigation -->
+            <div class="col-lg-3 col-xl-2">
+                <div class="sidebar">
+                    <nav class="sidebar-nav">
+                        <ul class="nav flex-column">
+                            <li class="nav-item">
+                                <a class="nav-link active" href="{{ url_for('dashboard') }}">
+                                    <i class="fas fa-chart-line me-2"></i>
+                                    <span>Dashboard</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" onclick="showComingSoon('Data Latih')">
+                                    <i class="fas fa-database me-2"></i>
+                                    <span>Data Latih</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" onclick="showComingSoon('Hasil Klasifikasi')">
+                                    <i class="fas fa-tags me-2"></i>
+                                    <span>Hasil Klasifikasi</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ url_for('logout') }}">
+                                    <i class="fas fa-sign-out-alt me-2"></i>
+                                    <span>Logout</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+
+            <!-- Main Content Area -->
+            <div class="col-lg-9 col-xl-10">
+                <div class="main-content">
+                    <!-- Flash Messages -->
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+
+                    <!-- Welcome Banner -->
+                    <div class="welcome-banner">
+                        <div class="banner-content">
+                            <h1 class="banner-title">Selamat Datang di Aplikasi Arianalyze</h1>
+                            <p class="banner-subtitle">Platform aplikasi untuk melakukan analisis sentimen komentar</p>
+                        </div>
+                        <div class="banner-decoration">
+                            <div class="decoration-circle circle-1"></div>
+                            <div class="decoration-circle circle-2"></div>
+                        </div>
+                    </div>
+
+                    <!-- Dashboard Content -->
+                    <div class="dashboard-content">
+                        <div class="row">
+                            <!-- Statistics Cards -->
+                            <div class="col-md-4 mb-4">
+                                <div class="stat-card">
+                                    <div class="stat-icon">
+                                        <i class="fas fa-comments"></i>
+                                    </div>
+                                    <div class="stat-content">
+                                        <h3 class="stat-number">{{ total_comments or 0 }}</h3>
+                                        <p class="stat-label">Total Komentar</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4 mb-4">
+                                <div class="stat-card">
+                                    <div class="stat-icon positive">
+                                        <i class="fas fa-smile"></i>
+                                    </div>
+                                    <div class="stat-content">
+                                        <h3 class="stat-number">{{ positive_comments or 0 }}</h3>
+                                        <p class="stat-label">Sentimen Positif</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4 mb-4">
+                                <div class="stat-card">
+                                    <div class="stat-icon negative">
+                                        <i class="fas fa-frown"></i>
+                                    </div>
+                                    <div class="stat-content">
+                                        <h3 class="stat-number">{{ negative_comments or 0 }}</h3>
+                                        <p class="stat-label">Sentimen Negatif</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Recent Comments Section -->
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="content-section">
+                                    <div class="section-header">
+                                        <h2 class="section-title">Komentar Terbaru</h2>
+                                        <a href="{{ url_for('index') }}" class="btn btn-success btn-sm">
+                                            <i class="fas fa-plus me-1"></i>Analisis Baru
+                                        </a>
+                                    </div>
+                                    
+                                    <div class="comments-list">
+                                        {% if user_comments %}
+                                            {% for comment in user_comments %}
+                                            <div class="comment-item">
+                                                <div class="comment-content">
+                                                    <p class="comment-text">{{ comment.content }}</p>
+                                                    <div class="comment-meta">
+                                                        <span class="comment-date">
+                                                            <i class="fas fa-clock me-1"></i>
+                                                            {{ comment.created_at.strftime('%d %b %Y, %H:%M') }}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <div class="comment-result">
+                                                    <span class="sentiment-badge sentiment-{{ 'positive' if comment.sentiment_result == 'Positif' else 'negative' if comment.sentiment_result == 'Negatif' else 'neutral' }}">
+                                                        {{ comment.sentiment_result }}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            {% endfor %}
+                                        {% else %}
+                                        <div class="empty-state">
+                                            <div class="empty-icon">
+                                                <i class="fas fa-comment-slash"></i>
+                                            </div>
+                                            <h3 class="empty-title">Belum Ada Komentar</h3>
+                                            <p class="empty-description">Mulai analisis sentimen dengan menambahkan komentar pertama Anda.</p>
+                                            <a href="{{ url_for('index') }}" class="btn btn-success">
+                                                <i class="fas fa-plus me-1"></i>Mulai Analisis
+                                            </a>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JS -->
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+</body>
+</html>

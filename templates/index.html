@@ -27,7 +27,20 @@
             </a>
             
             <div class="navbar-nav ms-auto">
-                <a class="btn btn-success login-btn" href="{{ url_for('login') }}">Login</a>
+                {% if session.username %}
+                    <div class="dropdown">
+                        <button class="btn btn-outline-success dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            {{ session.username }}
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ url_for('logout') }}">Logout</a></li>
+                        </ul>
+                    </div>
+                {% else %}
+                    <a class="btn btn-success login-btn" href="{{ url_for('login') }}">Login</a>
+                {% endif %}
             </div>
         </div>
     </nav>
