@@ -202,5 +202,14 @@ def dashboard():
                          positive_comments=positive_comments,
                          negative_comments=negative_comments)
 
+@app.route('/data-latih')
+def data_latih():
+    """Data training page for sentiment analysis"""
+    if 'user_id' not in session:
+        flash('Silakan login terlebih dahulu.', 'warning')
+        return redirect(url_for('login'))
+    
+    return render_template('data_latih.html')
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
