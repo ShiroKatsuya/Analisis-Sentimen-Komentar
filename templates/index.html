@@ -112,9 +112,21 @@
                     <!-- Results Display -->
                     {% if show_result and sentiment_result %}
                     <div class="results-container">
-                        <div class="sentiment-result sentiment-positive">
+                        <div class="sentiment-result {% if sentiment_result == 'Positif' %}sentiment-positive{% elif sentiment_result == 'Negatif' %}sentiment-negative{% else %}sentiment-neutral{% endif %}">
                             <div class="sentiment-text">{{ sentiment_result }}</div>
+                            {% if confidence_score %}
+                                <div class="confidence-score">
+                                    <small>Confidence: {{ "%.1f"|format(confidence_score * 100) }}%</small>
+                                </div>
+                            {% endif %}
                         </div>
+                        {% if session.username %}
+                            <div class="result-actions mt-3">
+                                <a href="{{ url_for('hasil_klasifikasi') }}" class="btn btn-outline-success btn-sm">
+                                    <i class="fas fa-chart-line me-1"></i>Lihat Semua Hasil
+                                </a>
+                            </div>
+                        {% endif %}
                     </div>
                     {% endif %}
                 </div>

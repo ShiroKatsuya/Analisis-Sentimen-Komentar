@@ -49,14 +49,19 @@ function filterTable(searchTerm) {
     let visibleCount = 0;
     
     tableRows.forEach(row => {
-        const commentText = row.querySelector('.comment-text').textContent.toLowerCase();
-        const prediction = row.querySelector('.prediction-badge').textContent.toLowerCase();
+        const commentElement = row.querySelector('.comment-text');
+        const predictionElement = row.querySelector('.prediction-badge');
         
-        if (commentText.includes(searchTerm) || prediction.includes(searchTerm)) {
-            row.style.display = '';
-            visibleCount++;
-        } else {
-            row.style.display = 'none';
+        if (commentElement && predictionElement) {
+            const commentText = commentElement.textContent.toLowerCase();
+            const prediction = predictionElement.textContent.toLowerCase();
+            
+            if (commentText.includes(searchTerm) || prediction.includes(searchTerm)) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
         }
     });
     
@@ -102,27 +107,30 @@ function applyFilter(filter) {
     
     tableRows.forEach(row => {
         const predictionBadge = row.querySelector('.prediction-badge');
-        const prediction = predictionBadge.textContent.toLowerCase();
         
-        let shouldShow = false;
-        
-        switch (filter) {
-            case 'all':
-                shouldShow = true;
-                break;
-            case 'positive':
-                shouldShow = prediction === 'positif';
-                break;
-            case 'negative':
-                shouldShow = prediction === 'negatif';
-                break;
-        }
-        
-        if (shouldShow) {
-            row.style.display = '';
-            visibleCount++;
-        } else {
-            row.style.display = 'none';
+        if (predictionBadge) {
+            const prediction = predictionBadge.textContent.toLowerCase();
+            
+            let shouldShow = false;
+            
+            switch (filter) {
+                case 'all':
+                    shouldShow = true;
+                    break;
+                case 'positive':
+                    shouldShow = prediction === 'positif';
+                    break;
+                case 'negative':
+                    shouldShow = prediction === 'negatif';
+                    break;
+            }
+            
+            if (shouldShow) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
         }
     });
     

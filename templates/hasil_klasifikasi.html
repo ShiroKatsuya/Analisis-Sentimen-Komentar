@@ -122,51 +122,38 @@
                                     </tr>
                                 </thead>
                                 <tbody id="resultsTableBody">
-                                    <tr>
-                                        <td>
-                                            <input type="checkbox" class="form-check-input row-select">
-                                        </td>
-                                        <td class="comment-text">Efisiensi Anggaran Picu Gelombang PHK Pekerja Hotel Menpar Widyanti Sebut Hanya Sementara</td>
-                                        <td>
-                                            <span class="prediction-badge prediction-negative">Negatif</span>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <input type="checkbox" class="form-check-input row-select">
-                                        </td>
-                                        <td class="comment-text">Efisiensi anggaran itu bukan rugiin tp malah memperbaiki anggaran yg gak semestrinya gak perlu</td>
-                                        <td>
-                                            <span class="prediction-badge prediction-positive">Positif</span>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <input type="checkbox" class="form-check-input row-select">
-                                        </td>
-                                        <td class="comment-text">kampus gue noh gelap karena efisiensi anggaran pendidikan kampong lo semua tikus pemerintah</td>
-                                        <td>
-                                            <span class="prediction-badge prediction-negative">Negatif</span>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <input type="checkbox" class="form-check-input row-select">
-                                        </td>
-                                        <td class="comment-text">Anjir anggaran ppm tahun ini dipolong gegara efek efisiensi gila bgtt</td>
-                                        <td>
-                                            <span class="prediction-badge prediction-negative">Negatif</span>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <input type="checkbox" class="form-check-input row-select">
-                                        </td>
-                                        <td class="comment-text">mungkin buzzer juga kena efisiensi anggaran wkwkw</td>
-                                        <td>
-                                            <span class="prediction-badge prediction-negative">Negatif</span>
-                                        </td>
-                                    </tr>
+                                    {% if comments %}
+                                        {% for comment in comments %}
+                                        <tr>
+                                            <td>
+                                                <input type="checkbox" class="form-check-input row-select">
+                                            </td>
+                                            <td class="comment-text">{{ comment.content }}</td>
+                                            <td>
+                                                {% if comment.sentiment_result == 'Positif' %}
+                                                    <span class="prediction-badge prediction-positive">Positif</span>
+                                                {% elif comment.sentiment_result == 'Negatif' %}
+                                                    <span class="prediction-badge prediction-negative">Negatif</span>
+                                                {% else %}
+                                                    <span class="prediction-badge prediction-neutral">Netral</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="3" class="text-center py-4">
+                                                <div class="empty-state">
+                                                    <i class="fas fa-inbox"></i>
+                                                    <h6>Belum ada hasil klasifikasi</h6>
+                                                    <p>Silakan lakukan analisis sentimen di halaman utama terlebih dahulu.</p>
+                                                    <a href="{{ url_for('index') }}" class="btn btn-primary btn-sm">
+                                                        <i class="fas fa-plus me-1"></i>Analisis Komentar
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endif %}
                                 </tbody>
                             </table>
                         </div>
@@ -174,7 +161,7 @@
                         <!-- Pagination -->
                         <div class="table-footer">
                             <div class="pagination-info">
-                                <span class="text-muted">1-10 of 97</span>
+                                <span class="text-muted">1-{{ [10, comments|length]|min }} of {{ total_comments }}</span>
                             </div>
                             <div class="pagination-controls">
                                 <div class="rows-per-page">
@@ -208,7 +195,7 @@
                                         <i class="fas fa-smile"></i>
                                     </div>
                                     <div class="stat-content">
-                                        <h3 class="stat-number">1</h3>
+                                        <h3 class="stat-number">{{ positive_comments }}</h3>
                                         <p class="stat-label">Sentimen Positif</p>
                                     </div>
                                 </div>
@@ -219,7 +206,7 @@
                                         <i class="fas fa-frown"></i>
                                     </div>
                                     <div class="stat-content">
-                                        <h3 class="stat-number">4</h3>
+                                        <h3 class="stat-number">{{ negative_comments }}</h3>
                                         <p class="stat-label">Sentimen Negatif</p>
                                     </div>
                                 </div>
@@ -230,7 +217,7 @@
                                         <i class="fas fa-chart-bar"></i>
                                     </div>
                                     <div class="stat-content">
-                                        <h3 class="stat-number">97</h3>
+                                        <h3 class="stat-number">{{ total_comments }}</h3>
                                         <p class="stat-label">Total Klasifikasi</p>
                                     </div>
                                 </div>

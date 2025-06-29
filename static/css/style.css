@@ -354,3 +354,23 @@ body {
     0% { transform: translate(-50%, -50%) rotate(0deg); }
     100% { transform: translate(-50%, -50%) rotate(360deg); }
 }
+
+/* Additional sentiment styles */
+.sentiment-negative {
+    background: linear-gradient(135deg, #dc3545, #e74c3c);
+    color: white;
+}
+
+.sentiment-neutral {
+    background: linear-gradient(135deg, #ffc107, #ffb300);
+    color: white;
+}
+
+.confidence-score {
+    margin-top: 0.5rem;
+    opacity: 0.8;
+}
+
+.result-actions {
+    text-align: center;
+}
