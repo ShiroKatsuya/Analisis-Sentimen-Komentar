@@ -84,6 +84,13 @@ The current setup is optimized for development and demonstration purposes. For p
 - Static file serving optimization
 - Security enhancements
 
+## Recent Changes
+
+- June 29, 2025: Added Classification Results page with table interface
+- June 29, 2025: Implemented Data Training page with search and import functionality
+- June 29, 2025: Connected dashboard navigation to all main pages
+- June 29, 2025: Added comprehensive table interactions (search, filter, export, bulk actions)
+
 ## Changelog
 
 - June 29, 2025. Initial setup

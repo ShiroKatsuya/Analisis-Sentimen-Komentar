@@ -211,5 +211,14 @@ def data_latih():
     
     return render_template('data_latih.html')
 
+@app.route('/hasil-klasifikasi')
+def hasil_klasifikasi():
+    """Classification results page for sentiment analysis"""
+    if 'user_id' not in session:
+        flash('Silakan login terlebih dahulu.', 'warning')
+        return redirect(url_for('login'))
+    
+    return render_template('hasil_klasifikasi.html')
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
