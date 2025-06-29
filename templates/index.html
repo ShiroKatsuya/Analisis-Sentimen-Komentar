@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arianalyze - Analisis Sentimen Komentar</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <!-- Header Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white py-3 shadow-sm">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="{{ url_for('index') }}">
+                <div class="logo-circle me-2">
+                    <i class="fas fa-circle text-success"></i>
+                    <i class="fas fa-circle text-success ms-1"></i>
+                </div>
+                <span class="brand-text">Arianalyze</span>
+            </a>
+            
+            <div class="navbar-nav ms-auto">
+                <a class="btn btn-success login-btn" href="{{ url_for('login') }}">Login</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mt-5">
+        <div class="row align-items-center min-vh-75">
+            <!-- Left Side - Illustration -->
+            <div class="col-lg-5 d-none d-lg-block">
+                <div class="illustration-container">
+                    <!-- Main illustration using SVG and CSS -->
+                    <div class="phone-mockup">
+                        <div class="phone-screen">
+                            <div class="phone-header"></div>
+                            <div class="phone-content">
+                                <div class="content-block"></div>
+                                <div class="content-block"></div>
+                                <div class="content-block small"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Character illustrations -->
+                    <div class="character character-1">
+                        <div class="character-body"></div>
+                        <div class="character-head"></div>
+                    </div>
+                    
+                    <div class="character character-2">
+                        <div class="character-body"></div>
+                        <div class="character-head"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Side - Main Form -->
+            <div class="col-lg-7">
+                <div class="main-content">
+                    <h1 class="main-title mb-4">Analisis Sentimen Komentar</h1>
+                    
+                    <!-- Flash Messages -->
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                    
+                    <!-- Comment Input Form -->
+                    <form method="POST" action="{{ url_for('analyze') }}" class="sentiment-form">
+                        <div class="mb-3">
+                            <label for="comment" class="form-label">Masukan Komentar</label>
+                            <textarea 
+                                class="form-control comment-input" 
+                                id="comment" 
+                                name="comment" 
+                                rows="4" 
+                                placeholder="Ketik komentar Anda di sini..."
+                                required>{{ comment if comment else '' }}</textarea>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-secondary ok-btn mb-4">OK</button>
+                    </form>
+                    
+                    <!-- Results Display -->
+                    {% if show_result and sentiment_result %}
+                    <div class="results-container">
+                        <div class="sentiment-result sentiment-positive">
+                            <div class="sentiment-text">{{ sentiment_result }}</div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JS -->
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

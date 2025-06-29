@@ -1,0 +1,356 @@
+/* Global Styles */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f8f9fa;
+    color: #333;
+}
+
+.min-vh-75 {
+    min-height: 75vh;
+}
+
+/* Header Styles */
+.navbar-brand {
+    font-weight: 600;
+    font-size: 1.5rem;
+    color: #333 !important;
+}
+
+.logo-circle {
+    display: flex;
+    align-items: center;
+}
+
+.logo-circle i {
+    font-size: 0.8rem;
+}
+
+.brand-text {
+    font-weight: 600;
+    color: #333;
+}
+
+.login-btn {
+    background-color: #28a745;
+    border-color: #28a745;
+    padding: 8px 24px;
+    font-weight: 500;
+    border-radius: 6px;
+}
+
+.login-btn:hover {
+    background-color: #218838;
+    border-color: #1e7e34;
+}
+
+/* Main Content Styles */
+.main-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 2rem;
+}
+
+.sentiment-form {
+    margin-bottom: 2rem;
+}
+
+.form-label {
+    font-weight: 500;
+    color: #555;
+    margin-bottom: 0.8rem;
+}
+
+.comment-input {
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    padding: 1rem;
+    font-size: 1rem;
+    background-color: #f8f9fa;
+    transition: all 0.3s ease;
+    resize: vertical;
+    min-height: 120px;
+}
+
+.comment-input:focus {
+    border-color: #28a745;
+    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+    background-color: #fff;
+}
+
+.ok-btn {
+    background-color: #6c757d;
+    border-color: #6c757d;
+    padding: 10px 30px;
+    font-weight: 500;
+    border-radius: 6px;
+    font-size: 1rem;
+}
+
+.ok-btn:hover {
+    background-color: #5a6268;
+    border-color: #545b62;
+}
+
+/* Results Styles */
+.results-container {
+    margin-top: 2rem;
+}
+
+.sentiment-result {
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1.1rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.sentiment-positive {
+    background-color: #28a745;
+    color: white;
+}
+
+.sentiment-negative {
+    background-color: #dc3545;
+    color: white;
+}
+
+.sentiment-neutral {
+    background-color: #ffc107;
+    color: #333;
+}
+
+.sentiment-text {
+    position: relative;
+    z-index: 2;
+}
+
+/* Illustration Styles */
+.illustration-container {
+    position: relative;
+    height: 400px;
+    padding: 2rem;
+}
+
+.phone-mockup {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 180px;
+    height: 320px;
+    background: linear-gradient(135deg, #a8e6cf, #7fcdcd);
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    z-index: 1;
+}
+
+.phone-screen {
+    width: 100%;
+    height: 100%;
+    background-color: #fff;
+    border-radius: 15px;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+}
+
+.phone-header {
+    width: 60px;
+    height: 60px;
+    background-color: #a8e6cf;
+    border-radius: 50%;
+    margin-bottom: 15px;
+    position: relative;
+}
+
+.phone-header::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 30px;
+    height: 30px;
+    background-color: #fff;
+    border-radius: 50%;
+}
+
+.phone-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.content-block {
+    height: 20px;
+    background-color: #28a745;
+    border-radius: 4px;
+}
+
+.content-block.small {
+    height: 15px;
+    width: 70%;
+}
+
+/* Character Styles */
+.character {
+    position: absolute;
+    width: 80px;
+    height: 120px;
+}
+
+.character-1 {
+    left: 10%;
+    bottom: 10%;
+    z-index: 2;
+}
+
+.character-2 {
+    right: 15%;
+    bottom: 20%;
+    z-index: 2;
+}
+
+.character-body {
+    width: 100%;
+    height: 80px;
+    background: linear-gradient(45deg, #28a745, #20c997);
+    border-radius: 40px 40px 20px 20px;
+    position: relative;
+}
+
+.character-head {
+    width: 40px;
+    height: 40px;
+    background-color: #fdbcb4;
+    border-radius: 50%;
+    position: absolute;
+    top: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 3px solid #fff;
+}
+
+.character-head::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 20px;
+    height: 20px;
+    background-color: #333;
+    border-radius: 50%;
+}
+
+/* Responsive Design */
+@media (max-width: 991.98px) {
+    .main-title {
+        font-size: 2rem;
+        text-align: center;
+    }
+    
+    .main-content {
+        text-align: center;
+    }
+    
+    .sentiment-form {
+        text-align: left;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .main-title {
+        font-size: 1.75rem;
+    }
+    
+    .container {
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+    
+    .comment-input {
+        min-height: 100px;
+    }
+}
+
+/* Animation Effects */
+.sentiment-result {
+    animation: slideInFromBottom 0.5s ease-out;
+}
+
+@keyframes slideInFromBottom {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.phone-mockup {
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% {
+        transform: translate(-50%, -50%) translateY(0px);
+    }
+    50% {
+        transform: translate(-50%, -50%) translateY(-10px);
+    }
+}
+
+.character {
+    animation: bounce 2s ease-in-out infinite;
+}
+
+.character:nth-child(2) {
+    animation-delay: 0.5s;
+}
+
+@keyframes bounce {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-5px);
+    }
+}
+
+/* Loading state */
+.loading {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.loading .ok-btn {
+    position: relative;
+}
+
+.loading .ok-btn::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    margin: auto;
+    border: 2px solid transparent;
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+@keyframes spin {
+    0% { transform: translate(-50%, -50%) rotate(0deg); }
+    100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
