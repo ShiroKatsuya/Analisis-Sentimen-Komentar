@@ -31,7 +31,7 @@ class Comment(db.Model):
     """Comment model for storing user comments and sentiment analysis results"""
     id = db.Column(db.Integer, primary_key=True)
     content = db.Column(db.Text, nullable=False)
-    sentiment_result = db.Column(db.String(20), nullable=True)  # 'Positif', 'Negatif', 'Netral'
+    sentiment_result = db.Column(db.String(20), nullable=True)  # 'Positif', 'Negatif'
     confidence_score = db.Column(db.Float, nullable=True)  # Confidence level (0.0 to 1.0)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

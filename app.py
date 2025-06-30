@@ -117,7 +117,6 @@ def get_emotion_from_sentiment(sentiment):
     emotion_map = {
         'Positif': 'joy',
         'Negatif': 'anger',
-        'Netral': 'neutral'
     }
     return emotion_map.get(sentiment, 'neutral')
 
@@ -343,8 +342,8 @@ def upload_data_latih():
                 sentiment_label = str(row['label']).strip()
                 
                 # Basic validation for sentiment labels
-                if sentiment_label not in ['Positif', 'Negatif', 'Netral']:
-                    flash(f'Label "{sentiment_label}" pada baris {index + 2} tidak valid. Hanya "Positif", "Negatif", "Netral" yang diperbolehkan. Data ini akan diabaikan.', 'warning')
+                if sentiment_label not in ['Positif', 'Negatif']:
+                    flash(f'Label "{sentiment_label}" pada baris {index + 2} tidak valid. Hanya "Positif", "Negatif", yang diperbolehkan. Data ini akan diabaikan.', 'warning')
                     continue
                 
                 # Check if comment already exists to avoid duplicates
@@ -426,14 +425,14 @@ def hasil_klasifikasi():
     total_comments = len(comments)
     positive_comments = len([c for c in comments if c.sentiment_result == 'Positif'])
     negative_comments = len([c for c in comments if c.sentiment_result == 'Negatif'])
-    neutral_comments = len([c for c in comments if c.sentiment_result == 'Netral'])
+
     
     return render_template('hasil_klasifikasi.html',
                          comments=comments,
                          total_comments=total_comments,
                          positive_comments=positive_comments,
                          negative_comments=negative_comments,
-                         neutral_comments=neutral_comments)
+                         )
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
