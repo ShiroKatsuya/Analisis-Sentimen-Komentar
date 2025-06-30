@@ -7,13 +7,14 @@ document.addEventListener('DOMContentLoaded', function() {
     initializePagination();
     initializeImportModal();
     initializeCheckboxes();
+    initializeDeleteButtons();
 });
 
 function initializeDataTable() {
     // Add sorting functionality to table headers
     const sortableHeaders = document.querySelectorAll('.data-table th');
     sortableHeaders.forEach(header => {
-        if (header.classList.contains('no-column') || header.classList.contains('comment-column')) {
+        if (header.classList.contains('no-column') || header.classList.contains('comment-column') || header.classList.contains('label-column')) {
             header.classList.add('sortable');
             header.addEventListener('click', function() {
                 sortTable(this);
@@ -25,8 +26,12 @@ function initializeDataTable() {
     const tableRows = document.querySelectorAll('.data-table tbody tr');
     tableRows.forEach(row => {
         row.addEventListener('click', function(e) {
-            if (!e.target.matches('input[type="checkbox"]')) {
-                const checkbox = this.querySelector('.row-select');
+            // Prevent checkbox and delete button clicks from toggling row selection
+            if (e.target.closest('.row-select') || e.target.closest('.delete-btn')) {
+                return; 
+            }
+            const checkbox = this.querySelector('.row-select');
+            if (checkbox) {
                 checkbox.checked = !checkbox.checked;
                 toggleRowSelection(this, checkbox.checked);
                 updateBulkActions();
@@ -37,39 +42,64 @@ function initializeDataTable() {
 
 function initializeSearch() {
     const searchInput = document.getElementById('searchInput');
-    
-    searchInput.addEventListener('input', debounce(function() {
-        const searchTerm = this.value.toLowerCase();
-        filterTable(searchTerm);
-    }, 300));
+    const searchBox = searchInput.closest('.search-box');
+    const clearSearchBtn = document.createElement('button');
+
+
+    // Show/hide clear button based on input value
+    searchInput.addEventListener('input', function() {
+        if (this.value.length > 0) {
+            clearSearchBtn.style.display = 'block';
+        } else {
+            clearSearchBtn.style.display = 'none';
+        }
+        filterTable(this.value.toLowerCase());
+    });
+
+    // Clear search input when clear button is clicked
+    clearSearchBtn.addEventListener('click', function() {
+        searchInput.value = '';
+        this.style.display = 'none';
+        filterTable('');
+        searchInput.focus();
+    });
     
     // Add search keyboard shortcuts
     searchInput.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
             this.value = '';
+            clearSearchBtn.style.display = 'none';
             filterTable('');
         }
     });
 }
 
 function filterTable(searchTerm) {
+    console.log('Filtering table with search term:', searchTerm);
     const tableRows = document.querySelectorAll('.data-table tbody tr');
     let visibleCount = 0;
     
     tableRows.forEach(row => {
-        const commentText = row.querySelector('.comment-text').textContent.toLowerCase();
-        const label = row.querySelector('.label-badge').textContent.toLowerCase();
+        const commentTextElement = row.querySelector('.comment-text');
+        const labelElement = row.querySelector('.label-badge');
+        
+        const commentText = (commentTextElement?.textContent || '').toLowerCase();
+        const label = (labelElement?.textContent || '').toLowerCase();
         
         if (commentText.includes(searchTerm) || label.includes(searchTerm)) {
             row.style.display = '';
             visibleCount++;
+            console.log('Showing row:', row, 'Comment:', commentText, 'Label:', label);
         } else {
             row.style.display = 'none';
+            console.log('Hiding row:', row, 'Comment:', commentText, 'Label:', label);
         }
     });
     
     // Update pagination info
     updatePaginationInfo(visibleCount);
+    updateSelectAllState(); // Update select all checkbox state after filtering
+    updateBulkActions(); // Update bulk actions visibility
 }
 
 function initializePagination() {
@@ -159,44 +189,14 @@ function updateSelectAllState() {
 
 function updateBulkActions() {
     const checkedCount = document.querySelectorAll('.row-select:checked').length;
-    const bulkActions = document.querySelector('.bulk-actions');
+    const deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
     
-    if (checkedCount > 0) {
-        if (!bulkActions) {
-            createBulkActionsBar(checkedCount);
+    if (deleteSelectedBtn) {
+        if (checkedCount > 0) {
+            deleteSelectedBtn.style.display = 'inline-block'; // Show button
         } else {
-            updateBulkActionsText(checkedCount);
-            bulkActions.classList.add('show');
+            deleteSelectedBtn.style.display = 'none'; // Hide button
         }
-    } else if (bulkActions) {
-        bulkActions.classList.remove('show');
-    }
-}
-
-function createBulkActionsBar(count) {
-    const bulkActions = document.createElement('div');
-    bulkActions.className = 'bulk-actions show';
-    bulkActions.innerHTML = `
-        <div class="bulk-actions-text">
-            ${count} item dipilih
-        </div>
-        <button class="btn btn-sm btn-outline-danger" onclick="deleteSelected()">
-            <i class="fas fa-trash me-1"></i>Hapus
-        </button>
-        <button class="btn btn-sm btn-outline-primary" onclick="exportSelected()">
-            <i class="fas fa-download me-1"></i>Export
-        </button>
-    `;
-    
-    const tableSection = document.querySelector('.data-table-section');
-    const tableContainer = document.querySelector('.table-container');
-    tableSection.insertBefore(bulkActions, tableContainer);
-}
-
-function updateBulkActionsText(count) {
-    const bulkActionsText = document.querySelector('.bulk-actions-text');
-    if (bulkActionsText) {
-        bulkActionsText.textContent = `${count} item dipilih`;
     }
 }
 
@@ -314,27 +314,45 @@ function resetFileSelection() {
 function uploadFile() {
     const fileInput = document.getElementById('csvFile');
     const uploadBtn = document.getElementById('uploadBtn');
-    
+    const importModal = bootstrap.Modal.getInstance(document.getElementById('importModal'));
+
     if (fileInput.files.length === 0) {
         showNotification('Silakan pilih file terlebih dahulu', 'warning');
         return;
     }
-    
-    // Simulate file upload
+
+    const file = fileInput.files[0];
+    const formData = new FormData();
+    formData.append('csv_file', file);
+
     uploadBtn.disabled = true;
     uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Uploading...';
-    
-    setTimeout(() => {
-        showNotification('Data berhasil diimport!', 'success');
-        const modal = bootstrap.Modal.getInstance(document.getElementById('importModal'));
-        modal.hide();
-        resetFileSelection();
+
+    fetch('/upload_data_latih', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification(data.message, 'success');
+            importModal.hide();
+            resetFileSelection();
+            // Optionally, refresh data table here if needed
+            // For now, assume a page refresh or separate data load will handle it
+            location.reload(); // Simple reload to show updated data
+        } else {
+            showNotification(data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Terjadi kesalahan saat mengunggah file.', 'error');
+    })
+    .finally(() => {
         uploadBtn.disabled = false;
         uploadBtn.innerHTML = 'Upload Data';
-        
-        // Simulate adding new data to table
-        addSimulatedData();
-    }, 2000);
+    });
 }
 
 function addSimulatedData() {
@@ -348,34 +366,92 @@ function showImportModal() {
 }
 
 function deleteSelected() {
-    const checkedCount = document.querySelectorAll('.row-select:checked').length;
+    const selectedCommentIds = Array.from(document.querySelectorAll('.row-select:checked'))
+                                .map(checkbox => checkbox.closest('tr').dataset.commentId);
     
-    if (confirm(`Apakah Anda yakin ingin menghapus ${checkedCount} item yang dipilih?`)) {
-        // Simulate deletion
-        document.querySelectorAll('.row-select:checked').forEach(checkbox => {
-            const row = checkbox.closest('tr');
-            row.style.animation = 'fadeOut 0.3s ease';
-            setTimeout(() => {
-                row.remove();
-            }, 300);
-        });
-        
-        setTimeout(() => {
-            updateSelectAllState();
-            updateBulkActions();
-            showNotification(`${checkedCount} item berhasil dihapus`, 'success');
-        }, 400);
+    if (selectedCommentIds.length === 0) {
+        showNotification('Pilih setidaknya satu komentar untuk dihapus.', 'warning');
+        return;
+    }
+
+    if (confirm(`Anda yakin ingin menghapus ${selectedCommentIds.length} komentar terpilih?`)) {
+        // Iterate and delete each selected comment
+        let deletedCount = 0;
+        let failedCount = 0;
+
+        const deletePromises = selectedCommentIds.map(id => deleteComment(id));
+
+        Promise.allSettled(deletePromises)
+            .then(results => {
+                results.forEach(result => {
+                    if (result.status === 'fulfilled' && result.value) {
+                        deletedCount++;
+                    } else {
+                        failedCount++;
+                    }
+                });
+
+                if (deletedCount > 0) {
+                    showNotification(`${deletedCount} komentar berhasil dihapus.`, 'success');
+                }
+                if (failedCount > 0) {
+                    showNotification(`${failedCount} komentar gagal dihapus.`, 'error');
+                }
+                // Refresh the page or update the table after all deletions are attempted
+                location.reload(); 
+            })
+            .catch(error => {
+                showNotification(`Terjadi kesalahan saat memproses penghapusan massal: ${error.message}`, 'error');
+            });
     }
 }
 
-function exportSelected() {
-    const checkedCount = document.querySelectorAll('.row-select:checked').length;
-    showNotification(`Mengexport ${checkedCount} item yang dipilih...`, 'info');
-    
-    // Simulate export process
-    setTimeout(() => {
-        showNotification('Data berhasil diexport ke CSV', 'success');
-    }, 1500);
+function initializeDeleteButtons() {
+    document.querySelectorAll('.delete-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const commentId = this.dataset.id;
+            if (confirm('Anda yakin ingin menghapus komentar ini?')) {
+                deleteComment(commentId);
+            }
+        });
+    });
+
+    const deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
+    if (deleteSelectedBtn) {
+        deleteSelectedBtn.addEventListener('click', deleteSelected);
+    }
+}
+
+async function deleteComment(commentId) {
+    try {
+        const response = await fetch(`/delete-comment/${commentId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+            showNotification(data.message, 'success');
+            // Remove the row from the table
+            const rowToRemove = document.querySelector(`tr[data-comment-id="${commentId}"]`);
+            if (rowToRemove) {
+                rowToRemove.remove();
+                // Update counts/pagination if necessary
+                updatePaginationInfo(document.querySelectorAll('.data-table tbody tr').length); // Simple re-count
+                updateSelectAllState();
+                updateBulkActions();
+            }
+            return true; // Indicate success
+        } else {
+            showNotification(data.message || 'Gagal menghapus komentar.', 'error');
+            return false; // Indicate failure
+        }
+    } catch (error) {
+        showNotification(`Terjadi kesalahan jaringan: ${error.message}`, 'error');
+        return false; // Indicate failure
+    }
 }
 
 // Utility functions

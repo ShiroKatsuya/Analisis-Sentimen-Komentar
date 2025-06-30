@@ -7,6 +7,8 @@ document.addEventListener('DOMContentLoaded', function() {
     initializePagination();
     initializeCheckboxes();
     initializeStatistics();
+    initializeDeleteButtons();
+    initializeExportCsv();
 });
 
 function initializeResultsTable() {
@@ -14,8 +16,12 @@ function initializeResultsTable() {
     const tableRows = document.querySelectorAll('.results-table tbody tr');
     tableRows.forEach(row => {
         row.addEventListener('click', function(e) {
-            if (!e.target.matches('input[type="checkbox"]')) {
-                const checkbox = this.querySelector('.row-select');
+            // Prevent checkbox and delete button clicks from toggling row selection
+            if (e.target.closest('.row-select') || e.target.closest('.delete-btn')) {
+                return;
+            }
+            const checkbox = this.querySelector('.row-select');
+            if (checkbox) {
                 checkbox.checked = !checkbox.checked;
                 toggleRowSelection(this, checkbox.checked);
                 updateBulkActions();
@@ -29,16 +35,35 @@ function initializeResultsTable() {
 
 function initializeSearch() {
     const searchInput = document.getElementById('searchInput');
-    
-    searchInput.addEventListener('input', debounce(function() {
-        const searchTerm = this.value.toLowerCase();
-        filterTable(searchTerm);
-    }, 300));
+    const searchBox = searchInput.closest('.search-box');
+    const clearSearchBtn = document.createElement('button');
+    clearSearchBtn.className = 'clear-search-btn';
+    clearSearchBtn.innerHTML = '<i class="fas fa-times-circle"></i>';
+    searchBox.appendChild(clearSearchBtn);
+
+    // Show/hide clear button based on input value
+    searchInput.addEventListener('input', function() {
+        if (this.value.length > 0) {
+            clearSearchBtn.style.display = 'block';
+        } else {
+            clearSearchBtn.style.display = 'none';
+        }
+        filterTable(this.value.toLowerCase());
+    });
+
+    // Clear search input when clear button is clicked
+    clearSearchBtn.addEventListener('click', function() {
+        searchInput.value = '';
+        this.style.display = 'none';
+        filterTable('');
+        searchInput.focus();
+    });
     
     // Add search keyboard shortcuts
     searchInput.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
             this.value = '';
+            clearSearchBtn.style.display = 'none';
             filterTable('');
         }
     });
@@ -68,6 +93,8 @@ function filterTable(searchTerm) {
     // Update pagination info and statistics
     updatePaginationInfo(visibleCount);
     updateStatistics();
+    updateSelectAllState(); // Update select all checkbox state after filtering
+    updateBulkActions(); // Update bulk actions visibility
 }
 
 function initializeFilters() {
@@ -136,6 +163,8 @@ function applyFilter(filter) {
     
     updatePaginationInfo(visibleCount);
     updateStatistics();
+    updateSelectAllState(); // Update select all checkbox state after filtering
+    updateBulkActions(); // Update bulk actions visibility
 }
 
 function initializePagination() {
@@ -227,47 +256,14 @@ function updateSelectAllState() {
 
 function updateBulkActions() {
     const checkedCount = document.querySelectorAll('.row-select:checked').length;
-    const bulkActions = document.querySelector('.bulk-actions');
-    
-    if (checkedCount > 0) {
-        if (!bulkActions) {
-            createBulkActionsBar(checkedCount);
+    const deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
+
+    if (deleteSelectedBtn) {
+        if (checkedCount > 0) {
+            deleteSelectedBtn.style.display = 'inline-block'; // Show button
         } else {
-            updateBulkActionsText(checkedCount);
-            bulkActions.classList.add('show');
+            deleteSelectedBtn.style.display = 'none'; // Hide button
         }
-    } else if (bulkActions) {
-        bulkActions.classList.remove('show');
-    }
-}
-
-function createBulkActionsBar(count) {
-    const bulkActions = document.createElement('div');
-    bulkActions.className = 'bulk-actions show';
-    bulkActions.innerHTML = `
-        <div class="bulk-actions-text">
-            ${count} hasil dipilih
-        </div>
-        <button class="btn btn-sm btn-outline-primary" onclick="exportSelected()">
-            <i class="fas fa-download me-1"></i>Export CSV
-        </button>
-        <button class="btn btn-sm btn-outline-success" onclick="analyzeSelected()">
-            <i class="fas fa-chart-line me-1"></i>Analisis Detail
-        </button>
-        <button class="btn btn-sm btn-outline-danger" onclick="deleteSelected()">
-            <i class="fas fa-trash me-1"></i>Hapus
-        </button>
-    `;
-    
-    const tableSection = document.querySelector('.results-table-section');
-    const tableContainer = document.querySelector('.table-container');
-    tableSection.insertBefore(bulkActions, tableContainer);
-}
-
-function updateBulkActionsText(count) {
-    const bulkActionsText = document.querySelector('.bulk-actions-text');
-    if (bulkActionsText) {
-        bulkActionsText.textContent = `${count} hasil dipilih`;
     }
 }
 
@@ -343,8 +339,8 @@ function updateStatistics() {
 }
 
 function animateNumber(element, targetNumber) {
-    const currentNumber = parseInt(element.textContent);
-    const increment = targetNumber > currentNumber ? 1 : -1;
+    const currentNumber = 0; // Always start animation from 0
+    const increment = 1; // Always increment
     const duration = 500;
     const steps = Math.abs(targetNumber - currentNumber);
     const stepDuration = duration / Math.max(steps, 1);
@@ -352,11 +348,11 @@ function animateNumber(element, targetNumber) {
     let current = currentNumber;
     const timer = setInterval(() => {
         current += increment;
-        element.textContent = current;
-        
-        if (current === targetNumber) {
+        if ((increment > 0 && current >= targetNumber) || (increment < 0 && current <= targetNumber)) {
+            current = targetNumber; // Ensure it stops exactly at target
             clearInterval(timer);
         }
+        element.textContent = current;
     }, stepDuration);
 }
 
@@ -391,24 +387,89 @@ function analyzeSelected() {
 }
 
 function deleteSelected() {
-    const checkedCount = document.querySelectorAll('.row-select:checked').length;
-    
-    if (confirm(`Apakah Anda yakin ingin menghapus ${checkedCount} hasil klasifikasi yang dipilih?`)) {
-        // Simulate deletion
-        document.querySelectorAll('.row-select:checked').forEach(checkbox => {
-            const row = checkbox.closest('tr');
-            row.style.animation = 'fadeOut 0.3s ease';
-            setTimeout(() => {
-                row.remove();
-            }, 300);
+    const selectedCommentIds = Array.from(document.querySelectorAll('.row-select:checked'))
+                                .map(checkbox => checkbox.closest('tr').dataset.commentId);
+
+    if (selectedCommentIds.length === 0) {
+        showNotification('Pilih setidaknya satu hasil untuk dihapus.', 'warning');
+        return;
+    }
+
+    if (confirm(`Anda yakin ingin menghapus ${selectedCommentIds.length} hasil terpilih?`)) {
+        let deletedCount = 0;
+        let failedCount = 0;
+
+        const deletePromises = selectedCommentIds.map(id => deleteComment(id));
+
+        Promise.allSettled(deletePromises)
+            .then(results => {
+                results.forEach(result => {
+                    if (result.status === 'fulfilled' && result.value) {
+                        deletedCount++;
+                    } else {
+                        failedCount++;
+                    }
+                });
+
+                if (deletedCount > 0) {
+                    showNotification(`${deletedCount} hasil berhasil dihapus.`, 'success');
+                }
+                if (failedCount > 0) {
+                    showNotification(`${failedCount} hasil gagal dihapus.`, 'error');
+                }
+                location.reload(); // Refresh the page to reflect changes
+            })
+            .catch(error => {
+                showNotification(`Terjadi kesalahan saat memproses penghapusan massal: ${error.message}`, 'error');
+            });
+    }
+}
+
+function initializeDeleteButtons() {
+    document.querySelectorAll('.delete-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const commentId = this.dataset.id;
+            if (confirm('Anda yakin ingin menghapus hasil klasifikasi ini?')) {
+                deleteComment(commentId);
+            }
         });
-        
-        setTimeout(() => {
-            updateSelectAllState();
-            updateBulkActions();
-            updateStatistics();
-            showNotification(`${checkedCount} hasil klasifikasi berhasil dihapus`, 'success');
-        }, 400);
+    });
+
+    const deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
+    if (deleteSelectedBtn) {
+        deleteSelectedBtn.addEventListener('click', deleteSelected);
+    }
+}
+
+async function deleteComment(commentId) {
+    try {
+        const response = await fetch(`/delete-comment/${commentId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+            showNotification(data.message, 'success');
+            const rowToRemove = document.querySelector(`tr[data-comment-id="${commentId}"]`);
+            if (rowToRemove) {
+                rowToRemove.remove();
+                // Re-calculate and update statistics and pagination after deletion
+                updatePaginationInfo(document.querySelectorAll('.results-table tbody tr:not([style*="display: none"])').length);
+                updateStatistics();
+                updateSelectAllState();
+                updateBulkActions();
+            }
+            return true; // Indicate success
+        } else {
+            showNotification(data.message || 'Gagal menghapus hasil klasifikasi.', 'error');
+            return false; // Indicate failure
+        }
+    } catch (error) {
+        showNotification(`Terjadi kesalahan jaringan: ${error.message}`, 'error');
+        return false; // Indicate failure
     }
 }
 
@@ -525,3 +586,54 @@ document.addEventListener('keydown', function(e) {
         filterBySentiment('negative');
     }
 });
+
+function initializeExportCsv() {
+    const exportCsvBtn = document.getElementById('exportCsvBtn');
+    if (exportCsvBtn) {
+        exportCsvBtn.addEventListener('click', function() {
+            exportToCsv();
+        });
+    }
+}
+
+function exportToCsv() {
+    const selectedCommentIds = Array.from(document.querySelectorAll('.row-select:checked'))
+                                .map(checkbox => checkbox.closest('tr').dataset.commentId);
+
+    if (selectedCommentIds.length === 0) {
+        showNotification('Pilih setidaknya satu komentar untuk diekspor.', 'warning');
+        return;
+    }
+
+    showNotification('Mempersiapkan data untuk ekspor...', 'info');
+    fetch('/export-csv', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ comment_ids: selectedCommentIds })
+    })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(error => {
+                    throw new Error(error.error || 'Terjadi kesalahan saat mengekspor data.');
+                });
+            }
+            return response.blob();
+        })
+        .then(blob => {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = 'hasil_klasifikasi.csv';
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            showNotification('Data berhasil diekspor ke CSV!', 'success');
+        })
+        .catch(error => {
+            console.error('Export CSV Error:', error);
+            showNotification(error.message, 'error');
+        });
+}

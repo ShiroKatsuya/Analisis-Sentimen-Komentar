@@ -97,6 +97,14 @@
                             <h1 class="page-title">Hasil Klasifikasi</h1>
                             <p class="page-subtitle">Klasifikasi Sentimen Analisis dengan Naive Bayes Classifier</p>
                         </div>
+                        <div class="header-actions">
+                            <button class="btn btn-primary me-2" id="exportCsvBtn">
+                                <i class="fas fa-file-csv me-2"></i>Export ke CSV
+                            </button>
+                            <button class="btn btn-danger delete-selected-btn" id="deleteSelectedBtn" style="display: none;">
+                                <i class="fas fa-trash-alt me-2"></i>Hapus Terpilih
+                            </button>
+                        </div>
                     </div>
 
                     <!-- Classification Results Section -->
@@ -119,12 +127,13 @@
                                         </th>
                                         <th class="comment-column">Komentar</th>
                                         <th class="prediction-column">Label Prediksi</th>
+                                        <th class="action-column">Aksi</th>
                                     </tr>
                                 </thead>
                                 <tbody id="resultsTableBody">
                                     {% if comments %}
                                         {% for comment in comments %}
-                                        <tr>
+                                        <tr data-comment-id="{{ comment.id }}">
                                             <td>
                                                 <input type="checkbox" class="form-check-input row-select">
                                             </td>
@@ -134,15 +143,18 @@
                                                     <span class="prediction-badge prediction-positive">Positif</span>
                                                 {% elif comment.sentiment_result == 'Negatif' %}
                                                     <span class="prediction-badge prediction-negative">Negatif</span>
-                                                {% else %}
-                                                    <span class="prediction-badge prediction-neutral">Netral</span>
                                                 {% endif %}
+                                            </td>
+                                            <td class="action-column">
+                                                <button class="btn btn-sm btn-danger delete-btn" data-id="{{ comment.id }}">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
                                             </td>
                                         </tr>
                                         {% endfor %}
                                     {% else %}
                                         <tr>
-                                            <td colspan="3" class="text-center py-4">
+                                            <td colspan="4" class="text-center py-4">
                                                 <div class="empty-state">
                                                     <i class="fas fa-inbox"></i>
                                                     <h6>Belum ada hasil klasifikasi</h6>

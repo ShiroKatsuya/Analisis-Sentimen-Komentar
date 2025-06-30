@@ -101,6 +101,9 @@
                             <button class="btn btn-primary import-btn" onclick="showImportModal()">
                                 <i class="fas fa-upload me-2"></i>Import Data CSV
                             </button>
+                            <button class="btn btn-danger delete-selected-btn" id="deleteSelectedBtn" style="display: none;">
+                                <i class="fas fa-trash-alt me-2"></i>Hapus Terpilih
+                            </button>
                         </div>
                     </div>
 
@@ -125,59 +128,25 @@
                                         <th class="no-column">No</th>
                                         <th class="comment-column">Komentar</th>
                                         <th class="label-column">Label</th>
+                                        <th class="action-column">Aksi</th>
                                     </tr>
                                 </thead>
                                 <tbody id="dataTableBody">
-                                    <tr>
-                                        <td>
+                                    {% for comment in comments %}
+                                    <tr data-comment-id="{{ comment.id }}">
+                                        <td class="select-column">
                                             <input type="checkbox" class="form-check-input row-select">
                                         </td>
-                                        <td>1</td>
-                                        <td class="comment-text">Efisiensi Anggaran Picu Gelombang PHK Pekerja Hotel Menpar Widyanti Sebut Hanya Sementara</td>
-                                        <td>
-                                            <span class="label-badge label-negative">Negatif</span>
+                                        <td class="no-column">{{ loop.index }}</td>
+                                        <td class="comment-column"><span class="comment-text">{{ comment.content }}</span></td>
+                                        <td class="label-column"><span class="badge bg-{{ 'success' if comment.sentiment_result == 'Positif' else ('danger' if comment.sentiment_result == 'Negatif' else 'secondary') }} label-badge">{{ comment.sentiment_result }}</span></td>
+                                        <td class="action-column">
+                                            <button class="btn btn-sm btn-danger delete-btn" data-id="{{ comment.id }}">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
                                         </td>
                                     </tr>
-                                    <tr>
-                                        <td>
-                                            <input type="checkbox" class="form-check-input row-select">
-                                        </td>
-                                        <td>2</td>
-                                        <td class="comment-text">Efisiensi anggaran itu bukan rugiln tp malah memperbaiki anggaran yg gak semestrinya gak perlu</td>
-                                        <td>
-                                            <span class="label-badge label-positive">Positif</span>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <input type="checkbox" class="form-check-input row-select">
-                                        </td>
-                                        <td>3</td>
-                                        <td class="comment-text">kampus gue noh gelap karena efisiensi anggaran pendidikan kampong lo semua tikus pemerintah</td>
-                                        <td>
-                                            <span class="label-badge label-negative">Negatif</span>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <input type="checkbox" class="form-check-input row-select">
-                                        </td>
-                                        <td>4</td>
-                                        <td class="comment-text">Anjir anggaran ppm tahun ini dipolong gegara efek efisiensi gila bgtt</td>
-                                        <td>
-                                            <span class="label-badge label-negative">Negatif</span>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>
-                                            <input type="checkbox" class="form-check-input row-select">
-                                        </td>
-                                        <td>5</td>
-                                        <td class="comment-text">mungkin buzzer juga kena efisiensi anggaran wkwkw</td>
-                                        <td>
-                                            <span class="label-badge label-negative">Negatif</span>
-                                        </td>
-                                    </tr>
+                                    {% endfor %}
                                 </tbody>
                             </table>
                         </div>
