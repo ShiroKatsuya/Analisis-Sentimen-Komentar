@@ -46,6 +46,24 @@ class Comment(db.Model):
     def __repr__(self):
         return f'<Comment {self.id}: {self.content[:50]}...>'
 
+class Comment_DataLatih(db.Model):
+    """Comment model for storing user comments and sentiment analysis results"""
+    id = db.Column(db.Integer, primary_key=True)
+    content = db.Column(db.Text, nullable=False)
+    sentiment_result = db.Column(db.String(20), nullable=True)  # 'Positif', 'Negatif'
+    confidence_score = db.Column(db.Float, nullable=True)  # Confidence level (0.0 to 1.0)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Foreign key relationship with User
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    
+    # Additional metadata
+    ip_address = db.Column(db.String(45), nullable=True)  # For anonymous users
+    user_agent = db.Column(db.String(500), nullable=True)
+    
+    def __repr__(self):
+        return f'<Comment_DataLatih {self.id}: {self.content[:50]}...>'
 
 class SentimentAnalysis(db.Model):
     """Model for storing detailed sentiment analysis metrics"""
