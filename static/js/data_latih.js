@@ -379,7 +379,7 @@ function deleteSelected() {
         let deletedCount = 0;
         let failedCount = 0;
 
-        const deletePromises = selectedCommentIds.map(id => deleteComment(id));
+        const deletePromises = selectedCommentIds.map(id => deleteComment_datalatih(id));
 
         Promise.allSettled(deletePromises)
             .then(results => {
@@ -411,7 +411,7 @@ function initializeDeleteButtons() {
         button.addEventListener('click', function() {
             const commentId = this.dataset.id;
             if (confirm('Anda yakin ingin menghapus komentar ini?')) {
-                deleteComment(commentId);
+                deleteComment_datalatih(commentId);
             }
         });
     });
@@ -422,9 +422,9 @@ function initializeDeleteButtons() {
     }
 }
 
-async function deleteComment(commentId) {
+async function deleteComment_datalatih(commentId) {
     try {
-        const response = await fetch(`/delete-comment/${commentId}`, {
+        const response = await fetch(`/delete-comment-datalatih/${commentId}`, {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',

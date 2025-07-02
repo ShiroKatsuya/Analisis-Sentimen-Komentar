@@ -132,16 +132,16 @@
                                     </tr>
                                 </thead>
                                 <tbody id="dataTableBody">
-                                    {% for comment in comments %}
-                                    <tr data-comment-id="{{ comment.id }}">
+                                    {% for comment_datalatih in comment_datalatihs %}
+                                    <tr data-comment-id="{{ comment_datalatih.id }}">
                                         <td class="select-column">
                                             <input type="checkbox" class="form-check-input row-select">
                                         </td>
                                         <td class="no-column">{{ loop.index }}</td>
-                                        <td class="comment-column"><span class="comment-text">{{ comment.content }}</span></td>
-                                        <td class="label-column"><span class="badge bg-{{ 'success' if comment.sentiment_result == 'Positif' else ('danger' if comment.sentiment_result == 'Negatif' else 'secondary') }} label-badge">{{ comment.sentiment_result }}</span></td>
+                                        <td class="comment-column"><span class="comment-text">{{ comment_datalatih.content }}</span></td>
+                                        <td class="label-column"><span class="badge bg-{{ 'success' if comment_datalatih.sentiment_result == 'Positif' else ('danger' if comment_datalatih.sentiment_result == 'Negatif' else 'secondary') }} label-badge">{{ comment_datalatih.sentiment_result }}</span></td>
                                         <td class="action-column">
-                                            <button class="btn btn-sm btn-danger delete-btn" data-id="{{ comment.id }}">
+                                            <button class="btn btn-sm btn-danger delete-btn" data-id="{{ comment_datalatih.id }}" data-comment-id="{{ comment_datalatih.id }}">
                                                 <i class="fas fa-trash"></i>
                                             </button>
                                         </td>

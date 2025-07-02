@@ -304,12 +304,12 @@ def data_latih():
         flash('Silakan login terlebih dahulu.', 'warning')
         return redirect(url_for('login'))
     
-    from database_models.models import Comment, db # Import Comment model
+    from database_models.models import Comment_DataLatih, db # Import Comment model
     
     # Fetch all comments from the database
-    comments = Comment.query.order_by(Comment.created_at.desc()).all()
+    comment_datalatihs = Comment_DataLatih.query.order_by(Comment_DataLatih.created_at.desc()).all()
     
-    return render_template('data_latih.html', comments=comments)
+    return render_template('data_latih.html', comment_datalatihs=comment_datalatihs)
 
 @app.route('/upload_data_latih', methods=['POST'])
 def upload_data_latih():
@@ -334,7 +334,7 @@ def upload_data_latih():
             if 'komentar' not in df.columns or 'label' not in df.columns:
                 return jsonify(success=False, message='CSV must contain "komentar" and "label" columns.'), 400
             
-            from database_models.models import Comment, db # Import Comment model
+            from database_models.models import Comment_DataLatih, db # Import Comment model
             
             new_records_count = 0
             for index, row in df.iterrows():
@@ -347,13 +347,13 @@ def upload_data_latih():
                     continue
                 
                 # Check if comment already exists to avoid duplicates
-                existing_comment = Comment.query.filter_by(content=comment_content).first()
+                existing_comment = Comment_DataLatih.query.filter_by(content=comment_content).first()
                 if existing_comment:
                     flash(f'Komentar "{comment_content}" pada baris {index + 2} sudah ada dalam database. Data ini akan diabaikan.', 'info')
                     continue
                 
                 # Create a new Comment record
-                new_comment = Comment(
+                new_comment = Comment_DataLatih(
                     content=comment_content,
                     sentiment_result=sentiment_label,
                     ip_address=request.environ.get('REMOTE_ADDR'), # Use a placeholder or actual IP
@@ -384,6 +384,37 @@ def delete_comment(comment_id):
     
     try:
         comment = Comment.query.get(comment_id)
+        if not comment:
+            return jsonify(success=False, message='Komentar tidak ditemukan.'), 404
+
+        # Ensure only the owner or an admin can delete (if admin role is implemented)
+        # For now, allow logged-in users to delete their comments
+        if comment.user_id != session.get('user_id'):
+             # Allow deletion of comments with no user_id by any logged in user (e.g. uploaded data)
+            if comment.user_id is not None:
+                return jsonify(success=False, message='Anda tidak memiliki izin untuk menghapus komentar ini.'), 403
+
+        # Delete associated sentiment analysis entry first due to foreign key constraint
+        # Assuming one-to-one relationship
+        SentimentAnalysis.query.filter_by(comment_id=comment.id).delete()
+        
+        db.session.delete(comment)
+        db.session.commit()
+        return jsonify(success=True, message='Komentar berhasil dihapus.')
+    except Exception as e:
+        db.session.rollback()
+        return jsonify(success=False, message=f'Terjadi kesalahan saat menghapus komentar: {str(e)}'), 500
+
+@app.route('/delete-comment-datalatih/<int:comment_id>', methods=['DELETE'])
+def delete_comment_datalatih(comment_id):
+    """Handle deletion of a comment by ID"""
+    if 'user_id' not in session:
+        return jsonify(success=False, message='Unauthorized. Please log in.'), 401
+    
+    from database_models.models import Comment_DataLatih, SentimentAnalysis, db
+    
+    try:
+        comment = Comment_DataLatih.query.get(comment_id)
         if not comment:
             return jsonify(success=False, message='Komentar tidak ditemukan.'), 404
 
