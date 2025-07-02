@@ -275,27 +275,24 @@ def export_csv():
 
 @app.route('/dashboard')
 def dashboard():
-    """User dashboard showing statistics and comment history"""
-    from database_models.models import Comment, db
-    from sqlalchemy import func
+    """Dashboard page showing stats and recent comments"""
+    from database_models.models import Comment, db # Moved import here for scope
     
-    if 'user_id' not in session:
-        flash('Silakan login terlebih dahulu.', 'warning')
-        return redirect(url_for('login'))
-    
-    # Get all comment statistics (not limited by user_id)
-    user_comments = Comment.query.order_by(Comment.created_at.desc()).limit(20).all()
-    
-    # Calculate statistics for all comments
+    # Get total comments
     total_comments = Comment.query.count()
+    
+    # Get positive and negative comments
     positive_comments = Comment.query.filter_by(sentiment_result='Positif').count()
     negative_comments = Comment.query.filter_by(sentiment_result='Negatif').count()
     
-    return render_template('dashboard.html', 
-                         user_comments=user_comments,
-                         total_comments=total_comments,
-                         positive_comments=positive_comments,
-                         negative_comments=negative_comments)
+    # Get latest user comments, limited to 4
+    user_comments = Comment.query.order_by(Comment.created_at.desc()).limit(4).all()
+
+    return render_template('dashboard.html',
+                           total_comments=total_comments,
+                           positive_comments=positive_comments,
+                           negative_comments=negative_comments,
+                           user_comments=user_comments)
 
 @app.route('/data-latih')
 def data_latih():

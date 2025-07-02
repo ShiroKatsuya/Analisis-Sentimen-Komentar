@@ -154,7 +154,8 @@
                                         </a>
                                     </div>
                                     
-                                    <div class="comments-list">
+                                    <div class="comments-wrapper">
+                                        <div class="comments-list">
                                         {% if user_comments %}
                                             {% for comment in user_comments %}
                                             <div class="comment-item">
@@ -186,6 +187,7 @@
                                             </a>
                                         </div>
                                         {% endif %}
+                                    </div>
                                     </div>
                                 </div>
                             </div>
