@@ -283,13 +283,13 @@ def dashboard():
         flash('Silakan login terlebih dahulu.', 'warning')
         return redirect(url_for('login'))
     
-    # Get user's comment statistics
-    user_comments = Comment.query.filter_by(user_id=session['user_id']).order_by(Comment.created_at.desc()).limit(20).all()
+    # Get all comment statistics (not limited by user_id)
+    user_comments = Comment.query.order_by(Comment.created_at.desc()).limit(20).all()
     
-    # Calculate statistics
-    total_comments = Comment.query.filter_by(user_id=session['user_id']).count()
-    positive_comments = Comment.query.filter_by(user_id=session['user_id'], sentiment_result='Positif').count()
-    negative_comments = Comment.query.filter_by(user_id=session['user_id'], sentiment_result='Negatif').count()
+    # Calculate statistics for all comments
+    total_comments = Comment.query.count()
+    positive_comments = Comment.query.filter_by(sentiment_result='Positif').count()
+    negative_comments = Comment.query.filter_by(sentiment_result='Negatif').count()
     
     return render_template('dashboard.html', 
                          user_comments=user_comments,
