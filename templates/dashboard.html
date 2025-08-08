@@ -106,20 +106,26 @@
                     <div class="dashboard-content">
                         <div class="row">
                             <!-- Statistics Cards -->
+                                 <!--
                             <div class="col-md-4 mb-4">
+                                 
                                 <div class="stat-card">
                                     <div class="stat-icon">
                                         <i class="fas fa-comments"></i>
                                     </div>
+                              
                                     <div class="stat-content">
                                         <h3 class="stat-number">{{ total_comments or 0 }}</h3>
                                         <p class="stat-label">Total Komentar</p>
                                     </div>
+                              
                                 </div>
+                                
                             </div>
+                                  -->
                             
                             <div class="col-md-4 mb-4">
-                                <div class="stat-card">
+                                <div class="stat-card js-stat-card" data-sentiment="Positif" role="button" tabindex="0">
                                     <div class="stat-icon positive">
                                         <i class="fas fa-smile"></i>
                                     </div>
@@ -131,7 +137,7 @@
                             </div>
                             
                             <div class="col-md-4 mb-4">
-                                <div class="stat-card">
+                                <div class="stat-card js-stat-card" data-sentiment="Negatif" role="button" tabindex="0">
                                     <div class="stat-icon negative">
                                         <i class="fas fa-frown"></i>
                                     </div>
@@ -196,7 +202,10 @@
                 </div>
             </div>
         </div>
+        
     </div>
+
+    {% include '_footer.html' %}
 
     <!-- Bootstrap 5 JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

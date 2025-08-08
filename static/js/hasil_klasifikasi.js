@@ -126,6 +126,26 @@ function initializeFilters() {
             applyFilter(filter);
         });
     });
+
+    // Activate filter from URL query parameter if present (e.g., ?sentiment=Positif|Negatif)
+    const params = new URLSearchParams(window.location.search);
+    const sentimentParam = params.get('sentiment');
+    if (sentimentParam) {
+        const normalized = (function mapSentiment(param) {
+            const value = String(param).toLowerCase();
+            if (value.startsWith('pos')) return 'positive';
+            if (value.startsWith('neg')) return 'negative';
+            if (value === 'all') return 'all';
+            return 'all';
+        })(sentimentParam);
+
+        const targetPill = document.querySelector(`.filter-pill[data-filter="${normalized}"]`);
+        if (targetPill) {
+            filterPills.forEach(p => p.classList.remove('active'));
+            targetPill.classList.add('active');
+            applyFilter(normalized);
+        }
+    }
 }
 
 function applyFilter(filter) {
