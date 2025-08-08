@@ -2,19 +2,53 @@
 .dashboard-page {
     background-color: #f8f9fa;
     min-height: 100vh;
+    /* Prevent window/body scrolling on dashboard pages */
+    margin-top: 1rem;
+    overflow: hidden;
 }
 
 /* Dashboard Container */
 .dashboard-container {
-    min-height: calc(100vh - 80px);
+
+    height: calc(100vh - 80px);
+}
+
+/* Fixed Navbar for dashboard pages */
+.dashboard-page .navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1060;
+}
+
+.dashboard-page .dashboard-container {
+    padding-top: 80px; /* offset for fixed navbar height */
 }
 
 /* Sidebar Styles */
 .sidebar {
     background-color: #fff;
-    min-height: calc(100vh - 80px);
-    padding: 2rem 0;
-    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
+    position: sticky;
+    top: 80px; /* keep below the navbar */
+    height: calc(100vh - 80px);
+    /* Move scrolling to inner container to avoid sticky issues */
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid #e9ecef;
+    /* Keep sidebar static (no internal scroll) */
+    overflow: hidden;
+}
+
+/* Ensure the sidebar content scrolls while the container stays sticky */
+.sidebar .sidebar-nav {
+    overflow-y: hidden;
+    height: 100%;
+}
+
+/* Make the row span the viewport height under fixed navbar so sticky works reliably */
+.dashboard-container .row.g-0 {
+    height: 100%;
 }
 
 .sidebar-nav .nav-link {
@@ -51,8 +85,23 @@
 /* Main Content */
 .main-content {
     padding: 2rem;
-    min-height: calc(100vh - 80px);
+    height: calc(100vh - 80px);
+    overflow-y: auto; /* Only main content is scrollable vertically */
     overflow-x: visible; /* Ensure content can overflow horizontally */
+}
+
+/* Ensure footer is visible on dashboard-style pages */
+.dashboard-page .site-footer {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1030;
+}
+
+/* Prevent content from being hidden behind the fixed footer */
+.dashboard-page .main-content {
+    padding-bottom: 6rem; /* space for footer height */
 }
 
 /* Welcome Banner */

@@ -12,6 +12,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Statistics counter animation
     animateCounters();
+
+    // Click navigation for stat cards to hasil-klasifikasi with sentiment filter
+    initializeStatCardNavigation();
 });
 
 function initializeDashboard() {
@@ -133,6 +136,25 @@ function animateCounters() {
                 counter.textContent = Math.floor(current);
             }
         }, 16);
+    });
+}
+
+function initializeStatCardNavigation() {
+    const statCards = document.querySelectorAll('.js-stat-card');
+    statCards.forEach(card => {
+        const sentiment = card.getAttribute('data-sentiment');
+        const targetUrl = `/hasil-klasifikasi${sentiment ? `?sentiment=${encodeURIComponent(sentiment)}` : ''}`;
+
+        const navigate = () => { window.location.href = targetUrl; };
+
+        card.addEventListener('click', navigate);
+        card.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                navigate();
+            }
+        });
+        card.style.cursor = 'pointer';
     });
 }
 

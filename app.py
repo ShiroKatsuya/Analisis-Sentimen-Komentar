@@ -55,6 +55,26 @@ def analyze_sentiment_with_api(text):
         print(f"Error connecting to FastAPI: {e}")
         # Return default values in case of API error
         return "Tidak Diketahui"
+    
+@app.route('/sentimen_admin')
+def sentimen_admin():
+    """Admin page showing the sentiment analysis data"""
+    return render_template('data_latih.html')
+
+def analyze_sentiment_with_api(text):
+    """Send text to FastAPI for sentiment analysis"""
+    fastapi_url = "http://127.0.0.1:8888/predict_sentiment/"
+    try:
+        response = requests.post(fastapi_url, json={"teks_baru": text})
+        response.raise_for_status()  # Raise an HTTPError for bad responses (4xx or 5xx)
+        data = response.json()
+        sentiment = data.get("sentiment")
+        print(f"Sentiment analysis result: {sentiment}")
+        return sentiment
+    except requests.exceptions.RequestException as e:
+        print(f"Error connecting to FastAPI: {e}")
+        # Return default values in case of API error
+        return "Tidak Diketahui"
       
         
 
@@ -442,12 +462,18 @@ def hasil_klasifikasi():
     
     from database_models.models import Comment, db
     
-    # Get all comments with their sentiment analysis results
-    # Show both user's own comments and anonymous comments if user is logged in
+    # Base query: show both user's own comments and anonymous comments if user is logged in
     user_id = session.get('user_id')
-    comments = Comment.query.filter(
+    query = Comment.query.filter(
         (Comment.user_id == user_id) | (Comment.user_id == None)
-    ).order_by(Comment.created_at.desc()).all()
+    )
+
+    # Optional sentiment filter via query parameter
+    sentiment_filter = request.args.get('sentiment')
+    if sentiment_filter in ('Positif', 'Negatif'):
+        query = query.filter(Comment.sentiment_result == sentiment_filter)
+
+    comments = query.order_by(Comment.created_at.desc()).all()
     
     # Calculate statistics
     total_comments = len(comments)
