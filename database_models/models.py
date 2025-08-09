@@ -74,6 +74,7 @@ class SentimentAnalysis(db.Model):
     # positive_score = db.Column(db.Float, nullable=True)
     # negative_score = db.Column(db.Float, nullable=True)
     # neutral_score = db.Column(db.Float, nullable=True)
+    confidence_score = db.Column(db.Float, nullable=True)
     
     # Additional analysis metrics
     emotion_detected = db.Column(db.String(50), nullable=True)  # joy, anger, fear, etc.
