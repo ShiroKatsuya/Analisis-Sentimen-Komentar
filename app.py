@@ -104,6 +104,7 @@ def analyze():
             comment_id=comment.id,
             emotion_detected=get_emotion_from_sentiment(sentiment_result),
             keywords=extract_keywords(comment_text),
+            confidence_score=confidence_score,
             language_detected='id',
             analysis_model='Naive Bayes Classifier v1.0',
             processing_time=0.125
