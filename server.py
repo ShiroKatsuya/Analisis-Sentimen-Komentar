@@ -1,4 +1,5 @@
 import pickle
+import sys
 
 from fastapi import FastAPI
 from pydantic import BaseModel
@@ -25,8 +26,9 @@ async def predict_sentiment(request_body: SentimentRequest):
     # Calculate confidence score
     prediksi_proba = model.predict_proba(fitur_baru)
     confidence = float(prediksi_proba.max()) # Get the highest probability as confidence
+    print("data confidence : ", confidence, flush=True)  # Ensure output is flushed to terminal
 
-    return {"sentiment": sentiment}
+    return {"sentiment": sentiment, "confidence": confidence}
 
 if __name__ == "__main__":
     import uvicorn

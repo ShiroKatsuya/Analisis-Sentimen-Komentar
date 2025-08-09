@@ -42,39 +42,27 @@ def index():
     return render_template('index.html')
 
 def analyze_sentiment_with_api(text):
-    """Send text to FastAPI for sentiment analysis"""
+    """Send text to FastAPI for sentiment analysis and return (sentiment, confidence)."""
     fastapi_url = "http://127.0.0.1:8888/predict_sentiment/"
     try:
         response = requests.post(fastapi_url, json={"teks_baru": text})
         response.raise_for_status()  # Raise an HTTPError for bad responses (4xx or 5xx)
         data = response.json()
         sentiment = data.get("sentiment")
-        print(f"Sentiment analysis result: {sentiment}")
-        return sentiment
+        confidence = data.get("confidence")
+        print(f"Sentiment analysis result: {sentiment}, confidence: {confidence}")
+        return sentiment, confidence
     except requests.exceptions.RequestException as e:
         print(f"Error connecting to FastAPI: {e}")
         # Return default values in case of API error
-        return "Tidak Diketahui"
+        return "Tidak Diketahui", None
     
 @app.route('/sentimen_admin')
 def sentimen_admin():
     """Admin page showing the sentiment analysis data"""
     return render_template('data_latih.html')
 
-def analyze_sentiment_with_api(text):
-    """Send text to FastAPI for sentiment analysis"""
-    fastapi_url = "http://127.0.0.1:8888/predict_sentiment/"
-    try:
-        response = requests.post(fastapi_url, json={"teks_baru": text})
-        response.raise_for_status()  # Raise an HTTPError for bad responses (4xx or 5xx)
-        data = response.json()
-        sentiment = data.get("sentiment")
-        print(f"Sentiment analysis result: {sentiment}")
-        return sentiment
-    except requests.exceptions.RequestException as e:
-        print(f"Error connecting to FastAPI: {e}")
-        # Return default values in case of API error
-        return "Tidak Diketahui"
+ 
       
         
 
@@ -94,12 +82,13 @@ def analyze():
         return redirect(url_for('index'))
     
     # Perform sentiment analysis using FastAPI
-    sentiment_result = analyze_sentiment_with_api(comment_text)
+    sentiment_result, confidence_score = analyze_sentiment_with_api(comment_text)
     
     # Create new comment record
     comment = Comment(
         content=comment_text,
         sentiment_result=sentiment_result,
+        confidence_score=confidence_score,
         ip_address=request.environ.get('REMOTE_ADDR'),
         user_agent=request.headers.get('User-Agent'),
         user_id=session.get('user_id')  # Will be None if not logged in
