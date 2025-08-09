@@ -51,7 +51,7 @@ class Comment_DataLatih(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     content = db.Column(db.Text, nullable=False)
     sentiment_result = db.Column(db.String(20), nullable=True)  # 'Positif', 'Negatif'
-    confidence_score = db.Column(db.Float, nullable=True)  # Confidence level (0.0 to 1.0)
+    # confidence_score = db.Column(db.Float, nullable=True)  # Confidence level (0.0 to 1.0)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -70,10 +70,10 @@ class SentimentAnalysis(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     comment_id = db.Column(db.Integer, db.ForeignKey('comment.id'), nullable=False, unique=True)
     
-    # Sentiment scores for different categories
-    positive_score = db.Column(db.Float, nullable=True)
-    negative_score = db.Column(db.Float, nullable=True)
-    neutral_score = db.Column(db.Float, nullable=True)
+    # # Sentiment scores for different categories
+    # positive_score = db.Column(db.Float, nullable=True)
+    # negative_score = db.Column(db.Float, nullable=True)
+    # neutral_score = db.Column(db.Float, nullable=True)
     
     # Additional analysis metrics
     emotion_detected = db.Column(db.String(50), nullable=True)  # joy, anger, fear, etc.
