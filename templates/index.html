@@ -95,61 +95,102 @@
                     
                     <!-- Comment Input Form -->
                     <form method="POST" action="{{ url_for('analyze') }}" class="sentiment-form" id="sentimentForm">
-                        <div class="comments-container mb-4">
-                            <div class="comments-header d-flex justify-content-between align-items-center mb-3">
-                                <label class="form-label mb-0">Masukan Komentar</label>
-                                <button type="button" class="btn btn-outline-primary btn-sm add-comment-btn" id="addCommentBtn">
-                                    <i class="fas fa-plus me-1"></i>Tambah Komentar
-                                </button>
-                            </div>
-                            
-                            <div class="comment-fields" id="commentFields">
-                                <div class="comment-field mb-3" data-comment-id="1">
-                                    <div class="comment-input-wrapper">
-                                        <div class="comment-header d-flex justify-content-between align-items-center mb-2">
-                                            <span class="comment-number">Komentar #1</span>
-                                            <button type="button" class="btn btn-outline-danger btn-sm remove-comment-btn" 
-                                                    onclick="removeComment(this)" style="display: none;">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </div>
-                                        <textarea 
-                                            class="form-control comment-input" 
-                                            name="comments[]" 
-                                            rows="3" 
-                                            placeholder="Ketik komentar Anda di sini..."
-                                            required>{{ comment if comment else '' }}</textarea>
-                                        <div class="comment-footer d-flex justify-content-between align-items-center mt-2">
-                                            <div class="char-counter">
-                                                <span class="char-count">0</span> karakter
-                                            </div>
-                                            <div class="comment-actions">
-                                                <button type="button" class="btn btn-outline-secondary btn-sm copy-btn" 
-                                                        onclick="copyComment(this)">
-                                                    <i class="fas fa-copy me-1"></i>Copy
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                        <div class="mb-3" style="width: 70%;">
+                            <label for="comment" class="form-label">Masukan Komentar</label>
+                            <textarea 
+                                class="form-control comment-input" 
+                                id="comment" 
+                                name="comment" 
+                                rows="1" 
+                                placeholder="Ketik komentar Anda di sini..."
+                                required>{{ comment if comment else '' }}</textarea>
+                            <div class="char-counter">
+                                <span id="charCount">0</span>
                             </div>
                         </div>
                         
-                        <div class="form-actions d-flex align-items-center gap-3">
-                            <button type="submit" class="btn btn-primary analyze-btn" id="analyzeBtn">
-                                <span class="btn-text">
-                                    <i class="fas fa-chart-line me-2"></i>Analisis Sentimen
-                                </span>
-                                <div class="loading-spinner" style="display: none;">
-                                    <div class="spinner"></div>
-                                </div>
-                            </button>
-                            
-                            <div class="comments-summary">
-                                <span class="total-comments">Total: <strong id="totalComments">1</strong> komentar</span>
+                        <button type="submit" class="btn btn-secondary ok-btn mb-4" id="analyzeBtn">
+                            <span class="btn-text">OK</span>
+                            <div class="loading-spinner" style="display: none;">
+                                <div class="spinner"></div>
                             </div>
-                        </div>
+                        </button>
                     </form>
+
+                     <!-- Results Display -->
+                     {% if show_result and sentiment_result %}
+                     <div class="results-container animate__animated animate__fadeInUp">
+                         <!-- Dynamic Emoji Visualization -->
+                         <div class="emoji-visualization">
+                             {% if sentiment_result == 'Positif' %}
+                                 <div class="emoji-display positive">
+                                     <div class="emoji-main">😊</div>
+                                     <div class="emoji-particles">
+                                         <span class="particle">✨</span>
+                                         <span class="particle">💖</span>
+                                         <span class="particle">🌟</span>
+                                     </div>
+                                 </div>
+                             {% elif sentiment_result == 'Negatif' %}
+                                 <div class="emoji-display negative">
+                                     <div class="emoji-main">😢</div>
+                                     <div class="emoji-particles">
+                                         <span class="particle">💔</span>
+                                         <span class="particle">😞</span>
+                                         <span class="particle">⚡</span>
+                                     </div>
+                                 </div>
+                             {% endif %}
+                         </div>
+ 
+                         <div class="sentiment-result {% if sentiment_result == 'Positif' %}sentiment-positive{% elif sentiment_result == 'Negatif' %}sentiment-negative{% endif %}">
+                             <div class="sentiment-text">{{ sentiment_result }}</div>
+                             {% if confidence_score %}
+                             <!--
+                             <div class="confidence-score">
+                                     <div class="confidence-bar">
+                                         <div class="confidence-fill" style="width: {{ confidence_score * 100 }}%"></div>
+                                     </div>
+                                     <small>Confidence: {{ "%.1f"|format(confidence_score * 100) }}%</small>
+                                 </div>
+                                 -->
+                             {% endif %}
+                         </div>
+ 
+                         <!-- Quick Copy and Actions -->
+                         <div class="result-actions mt-3">
+                             <!--
+                             <button class="btn btn-outline-primary btn-sm" onclick="quickCopy('{{ comment|replace("'", "\\'") }}', 'comment')">
+                                 <i class="fas fa-copy me-1"></i>Copy Komentar
+                             </button>
+                             <button class="btn btn-outline-secondary btn-sm" onclick="quickCopy('{{ sentiment_result }}', 'result')">
+                                 <i class="fas fa-tag me-1"></i>Copy Hasil
+                             </button>
+                             -->
+                             {% if session.username %}
+                                 <a href="{{ url_for('hasil_klasifikasi') }}" class="btn btn-outline-success btn-sm">
+                                     <i class="fas fa-chart-line me-1"></i>Lihat Semua Hasil
+                                 </a>
+                             {% endif %}
+                         </div>
+ 
+                         <!-- Mini Trend Chart 
+                         <div class="mini-trend-chart mt-3">
+                             <h6>Tren Analisis Terbaru</h6>
+                             <div class="trend-bars">
+                                 <div class="trend-bar positive" data-sentiment="positive">
+                                     <div class="bar-fill"></div>
+                                     <span class="bar-label">Positif</span>
+                                 </div>
+                                 <div class="trend-bar negative" data-sentiment="negative">
+                                     <div class="bar-fill"></div>
+                                     <span class="bar-label">Negatif</span>
+                                 </div>
+                             </div>
+                         </div>
+                         -->
+                     </div>
+                     {% endif %}
                     
                     <!-- Loading Animation -->
                     <div class="loading-animation" id="loadingAnimation" style="display: none;">
@@ -161,78 +202,207 @@
                         <p class="loading-text">Menganalisis sentimen...</p>
                     </div>
                     
-                    <!-- Results Display -->
-                    {% if show_result and sentiment_result %}
-                    <div class="results-container animate__animated animate__fadeInUp">
-                        <!-- Individual Comment Results -->
-                        {% if analysis_results %}
-                        <div class="individual-results">
-                            <h4 class="results-title mb-4 text-center">
-                                <i class="fas fa-chart-line me-2"></i>Hasil Analisis Sentimen
-                            </h4>
+                    <!-- CSV Bulk Classification Section -->
+                    <div class="bulk-classification-section mt-5">
+                        <div class="section-divider">
+                            <span class="divider-line"></span>
+                            <span class="divider-text">Atau</span>
+                            <span class="divider-line"></span>
+                        </div>
+                        
+                        <div class="bulk-form-container">
+                            <h3 class="bulk-title mb-4">
+                                <i class="fas fa-upload me-2"></i>
+                                Analisis Bulk dengan CSV
+                            </h3>
+                            <p class="bulk-description mb-4">
+                                Upload file CSV yang berisi data komentar untuk dianalisis secara massal
+                            </p>
                             
-                            <div class="comment-results-grid">
-                                {% for result in analysis_results %}
-                                <div class="comment-result-card mb-4">
-                                    <div class="result-header d-flex justify-content-between align-items-start mb-3">
-                                        <span class="comment-number-badge">Komentar #{{ loop.index }}</span>
-                                        <span class="sentiment-badge sentiment-{{ result.sentiment.lower() }}">
-                                            {{ result.sentiment }}
-                                        </span>
+                            <form method="POST" action="{{ url_for('bulk_analyze') }}" enctype="multipart/form-data" class="bulk-form" id="bulkForm">
+                                <div class="file-upload-container mb-4">
+                                    <div class="file-upload-area" id="fileUploadArea">
+                                        <div class="upload-icon">
+                                            <i class="fas fa-cloud-upload-alt"></i>
+                                        </div>
+                                        <div class="upload-text">
+                                            <span class="primary-text">Pilih file CSV</span>
+                                            <span class="secondary-text">atau drag & drop di sini</span>
+                                        </div>
+                                        <input 
+                                            type="file" 
+                                            id="csvFile" 
+                                            name="csv_file" 
+                                            accept=".csv"
+                                            class="file-input"
+                                            required
+                                        >
                                     </div>
-                                    
-                                    <div class="comment-content mb-3">
-                                        <p class="comment-text">{{ result.comment }}</p>
+                                    <div class="file-info" id="fileInfo" style="display: none;">
+                                        <div class="file-details">
+                                            <i class="fas fa-file-csv text-success me-2"></i>
+                                            <span id="fileName"></span>
+                                            <span class="file-size" id="fileSize"></span>
+                                        </div>
+                                        <button type="button" class="btn-remove-file" id="removeFile">
+                                            <i class="fas fa-times"></i>
+                                        </button>
                                     </div>
-                                    
-                                    <!-- Emoji Visualization for each comment -->
-                                    <div class="emoji-visualization text-center mb-3">
-                                        {% if result.sentiment == 'Positif' %}
-                                            <div class="emoji-display positive">
-                                                <div class="emoji-main">😊</div>
-                                            </div>
-                                        {% elif result.sentiment == 'Negatif' %}
-                                            <div class="emoji-display negative">
-                                                <div class="emoji-main">😢</div>
-                                            </div>
-                                        {% else %}
-                                            <div class="emoji-display neutral">
-                                                <div class="emoji-main">😐</div>
-                                            </div>
-                                        {% endif %}
-                                    </div>
-                                    
-                                    {% if result.confidence %}
-                                    <div class="result-metrics">
-                                        <div class="confidence-indicator">
-                                            <small class="text-muted">Confidence:</small>
-                                            <div class="mini-confidence-bar">
-                                                <div class="mini-confidence-fill" style="width: {{ result.confidence * 100 }}%"></div>
-                                            </div>
-                                            <span class="confidence-percentage">{{ "%.1f"|format(result.confidence * 100) }}%</span>
+                                </div>
+                                
+                                <div class="bulk-options mb-4">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <label for="commentColumn" class="form-label">
+                                                <i class="fas fa-columns me-1"></i>
+                                                Kolom Komentar
+                                            </label>
+                                            <select class="form-select" id="commentColumn" name="comment_column">
+                                                <option value="">Pilih kolom...</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="batchSize" class="form-label">
+                                                <i class="fas fa-layer-group me-1"></i>
+                                                Ukuran Batch
+                                            </label>
+                                            <select class="form-select" id="batchSize" name="batch_size">
+                                                <option value="50">50 data per batch</option>
+                                                <option value="100" selected>100 data per batch</option>
+                                                <option value="200">200 data per batch</option>
+                                            </select>
                                         </div>
                                     </div>
-                                    {% endif %}
                                 </div>
-                                {% endfor %}
+                                
+                                <button type="submit" class="btn btn-primary bulk-analyze-btn mb-4" id="bulkAnalyzeBtn">
+                                    <span class="btn-text">
+                                        <i class="fas fa-play me-2"></i>
+                                        Mulai Analisis Bulk
+                                    </span>
+                                    <div class="loading-spinner" style="display: none;">
+                                        <div class="spinner"></div>
+                                    </div>
+                                </button>
+                            </form>
+                        </div>
+                        
+                        <!-- Bulk Analysis Progress -->
+                        <div class="bulk-progress-container" id="bulkProgressContainer" style="display: none;">
+                            <div class="progress-header">
+                                <h5 class="progress-title">
+                                    <i class="fas fa-chart-line me-2"></i>
+                                    Progress Analisis
+                                </h5>
+                                <div class="progress-stats">
+                                    <span class="stat-item">
+                                        <i class="fas fa-check-circle text-success me-1"></i>
+                                        <span id="processedCount">0</span> selesai
+                                    </span>
+                                    <span class="stat-item">
+                                        <i class="fas fa-clock text-warning me-1"></i>
+                                        <span id="remainingCount">0</span> tersisa
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <div class="progress mb-3">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                     role="progressbar" 
+                                     id="bulkProgressBar"
+                                     style="width: 0%">
+                                </div>
+                            </div>
+                            
+                            <div class="progress-details">
+                                <small class="text-muted">
+                                    Memproses batch <span id="currentBatch">1</span> dari <span id="totalBatches">1</span>
+                                </small>
                             </div>
                         </div>
-                        {% endif %}
-
-                        <!-- Quick Actions -->
-                        <div class="result-actions mt-4 text-center">
-                            {% if session.username %}
-                                <a href="{{ url_for('hasil_klasifikasi') }}" class="btn btn-outline-success btn-lg">
-                                    <i class="fas fa-chart-line me-2"></i>Lihat Semua Hasil
-                                </a>
-                            {% endif %}
+                        
+                        <!-- Bulk Results Table -->
+                        <div class="bulk-results-container" id="bulkResultsContainer" style="display: none;">
+                            <div class="results-header">
+                                <h5 class="results-title">
+                                    <i class="fas fa-table me-2"></i>
+                                    Hasil Analisis 
+                                </h5>
+                                <!--
+                                <div class="results-actions">
+                                    <button class="btn btn-outline-success btn-sm" id="exportCsvBtn">
+                                        <i class="fas fa-download me-1"></i>
+                                        Export CSV
+                                    </button>
+                                    <button class="btn btn-outline-primary btn-sm" id="exportExcelBtn">
+                                        <i class="fas fa-file-excel me-1"></i>
+                                        Export Excel
+                                    </button>
+                                </div>
+                                -->
+                            </div>
                             
-                            <button type="button" class="btn btn-outline-primary btn-lg ms-2" onclick="resetForm()">
-                                <i class="fas fa-redo me-2"></i>Analisis Baru
-                            </button>
+                            <div class="table-responsive">
+                                <table class="table table-hover bulk-results-table" id="bulkResultsTable">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>No</th>
+                                            <th>Komentar</th>
+                                            <th>Sentimen</th>
+                                            <!-- <th>Confidence</th> -->
+                                            <!-- <th>Status</th> -->
+                                        </tr>
+                                    </thead>
+                                    <tbody id="bulkResultsBody">
+                                        <!-- Results will be populated here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <!--
+                            <div class="results-summary mt-3">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="summary-card positive">
+                                            <div class="summary-icon">
+                                                <i class="fas fa-smile"></i>
+                                            </div>
+                                            <div class="summary-content">
+                                                <div class="summary-number" id="positiveCount">0</div>
+                                                <div class="summary-label">Positif</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="summary-card negative">
+                                            <div class="summary-icon">
+                                                <i class="fas fa-frown"></i>
+                                            </div>
+                                            <div class="summary-content">
+                                                <div class="summary-number" id="negativeCount">0</div>
+                                                <div class="summary-label">Negatif</div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-3">
+                                        <div class="summary-card total">
+                                            <div class="summary-icon">
+                                                <i class="fas fa-chart-pie"></i>
+                                            </div>
+                                            <div class="summary-content">
+                                                <div class="summary-number" id="totalCount">0</div>
+                                                <div class="summary-label">Total</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
+                        -->
                     </div>
-                    {% endif %}
+                    
+                   
                 </div>
             </div>
         </div>

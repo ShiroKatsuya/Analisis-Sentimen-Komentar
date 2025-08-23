@@ -68,91 +68,199 @@ def sentimen_admin():
 
 @app.route('/analyze', methods=['POST'])
 def analyze():
-    """Handle multiple comment submissions and store in database"""
+    """Handle comment submission and store in database"""
     from database_models.models import Comment, SentimentAnalysis, db
     
-    # Get multiple comments from form
-    comments = request.form.getlist('comments[]')
+    comment_text = request.form.get('comment', '').strip()
     
-    if not comments or not any(comment.strip() for comment in comments):
+    if not comment_text:
         flash('Silakan masukkan komentar untuk dianalisis.', 'warning')
         return redirect(url_for('index'))
     
-    # Filter out empty comments
-    valid_comments = [comment.strip() for comment in comments if comment.strip()]
-    
-    if not valid_comments:
-        flash('Silakan masukkan komentar untuk dianalisis.', 'warning')
+    if len(comment_text) > 1000:
+        flash('Komentar terlalu panjang. Maksimal 1000 karakter.', 'warning')
         return redirect(url_for('index'))
     
-    # Check length for each comment
-    for comment in valid_comments:
-        if len(comment) > 1000:
-            flash(f'Komentar terlalu panjang. Maksimal 1000 karakter.', 'warning')
-            return redirect(url_for('index'))
+    # Perform sentiment analysis using FastAPI
+    sentiment_result, confidence_score = analyze_sentiment_with_api(comment_text)
     
-    # Process each comment
-    analysis_results = []
-    all_comments_text = []
+    # Create new comment record
+    comment = Comment(
+        content=comment_text,
+        sentiment_result=sentiment_result,
+        confidence_score=confidence_score,
+        ip_address=request.environ.get('REMOTE_ADDR'),
+        user_agent=request.headers.get('User-Agent'),
+        user_id=session.get('user_id')  # Will be None if not logged in
+    )
     
     try:
-        for comment_text in valid_comments:
-            # Perform sentiment analysis using FastAPI
-            sentiment_result, confidence_score = analyze_sentiment_with_api(comment_text)
-            
-            # Create new comment record
-            comment = Comment(
-                content=comment_text,
-                sentiment_result=sentiment_result,
-                confidence_score=confidence_score,
-                ip_address=request.environ.get('REMOTE_ADDR'),
-                user_agent=request.headers.get('User-Agent'),
-                user_id=session.get('user_id')  # Will be None if not logged in
-            )
-            
-            db.session.add(comment)
-            db.session.flush()  # Get the comment ID
-            
-            # Create sentiment analysis record
-            analysis = SentimentAnalysis(
-                comment_id=comment.id,
-                emotion_detected=get_emotion_from_sentiment(sentiment_result),
-                keywords=extract_keywords(comment_text),
-                confidence_score=confidence_score,
-                language_detected='id',
-                analysis_model='Naive Bayes Classifier v1.0',
-                processing_time=0.125
-            )
-            
-            db.session.add(analysis)
-            
-            # Store result for display
-            analysis_results.append({
-                'comment': comment_text,
-                'sentiment': sentiment_result,
-                'confidence': confidence_score
-            })
-            
-            all_comments_text.append(comment_text)
-        
-        # Commit all changes
+        db.session.add(comment)
         db.session.commit()
         
-        # Return individual results without combining them
+        flash(f'Analisis sentimen berhasil! Hasil: {sentiment_result}', 'success')
+        
         return render_template('index.html', 
-                             comments=all_comments_text,
-                             comment='\n\n'.join(all_comments_text),  # For backward compatibility
-                             sentiment_result='Multiple',  # Just indicate multiple results
-                             confidence_score=None,  # No overall confidence
-                             show_result=True,
-                             analysis_results=analysis_results,
-                             total_comments=len(valid_comments))
-                             
+                             show_result=True, 
+                             sentiment_result=sentiment_result, 
+                             confidence_score=confidence_score,
+                             comment=comment_text)
+        
     except Exception as e:
         db.session.rollback()
-        print(f"Error in analyze route: {e}")
-        flash('Terjadi kesalahan saat menyimpan analisis.', 'error')
+        print(f"Error saving comment: {e}")
+        flash('Terjadi kesalahan saat menyimpan hasil analisis.', 'error')
         return redirect(url_for('index'))
+
+@app.route('/bulk_analyze', methods=['POST'])
+def bulk_analyze():
+    """Handle bulk CSV file upload and analysis"""
+    from database_models.models import Comment, db
+    
+    try:
+        # Check if file was uploaded
+        if 'csv_file' not in request.files:
+            flash('Tidak ada file yang diupload.', 'error')
+            return redirect(url_for('index'))
+        
+        file = request.files['csv_file']
+        
+        # Check if file is selected
+        if file.filename == '':
+            flash('Tidak ada file yang dipilih.', 'error')
+            return redirect(url_for('index'))
+        
+        # Check file extension
+        if not file.filename.lower().endswith('.csv'):
+            flash('Hanya file CSV yang diperbolehkan.', 'error')
+            return redirect(url_for('index'))
+        
+        # Get form parameters
+        comment_column = request.form.get('comment_column', '0')
+        batch_size = int(request.form.get('batch_size', '100'))
+        
+        # Read CSV file
+        try:
+            # Read CSV content
+            csv_content = file.read().decode('utf-8')
+            df = pd.read_csv(io.StringIO(csv_content))
+            
+            # Validate comment column
+            try:
+                comment_column_index = int(comment_column)
+                if comment_column_index >= len(df.columns):
+                    flash('Indeks kolom komentar tidak valid.', 'error')
+                    return redirect(url_for('index'))
+            except ValueError:
+                flash('Indeks kolom komentar tidak valid.', 'error')
+                return redirect(url_for('index'))
+            
+            # Get comments from the specified column
+            comments = df.iloc[:, comment_column_index].dropna().astype(str).tolist()
+            
+            if not comments:
+                flash('Tidak ada komentar yang ditemukan dalam file CSV.', 'error')
+                return redirect(url_for('index'))
+            
+            # Limit comments to prevent abuse
+            max_comments = 1000
+            if len(comments) > max_comments:
+                flash(f'File terlalu besar. Maksimal {max_comments} komentar yang dapat diproses.', 'warning')
+                comments = comments[:max_comments]
+            
+            # Process comments in batches
+            results = []
+            total_processed = 0
+            
+            for i in range(0, len(comments), batch_size):
+                batch = comments[i:i + batch_size]
+                batch_results = []
+                
+                for comment_text in batch:
+                    comment_text = comment_text.strip()
+                    if len(comment_text) > 1000:
+                        comment_text = comment_text[:1000]
+                    
+                    # Perform sentiment analysis
+                    sentiment_result, confidence_score = analyze_sentiment_with_api(comment_text)
+                    
+                    # Store in database
+                    comment = Comment(
+                        content=comment_text,
+                        sentiment_result=sentiment_result,
+                        confidence_score=confidence_score,
+                        ip_address=request.environ.get('REMOTE_ADDR'),
+                        user_agent=request.headers.get('User-Agent'),
+                        user_id=session.get('user_id')
+                    )
+                    
+                    try:
+                        db.session.add(comment)
+                        batch_results.append({
+                            'comment': comment_text,
+                            'sentiment': sentiment_result,
+                            'confidence': confidence_score,
+                            'status': 'Berhasil'
+                        })
+                        total_processed += 1
+                    except Exception as e:
+                        print(f"Error saving comment: {e}")
+                        batch_results.append({
+                            'comment': comment_text,
+                            'sentiment': 'Error',
+                            'confidence': 0.0,
+                            'status': 'Gagal'
+                        })
+                
+                # Commit batch
+                try:
+                    db.session.commit()
+                except Exception as e:
+                    db.session.rollback()
+                    print(f"Error committing batch: {e}")
+                
+                results.extend(batch_results)
+            
+            # Calculate summary statistics
+            sentiment_counts = {}
+            for result in results:
+                sentiment = result['sentiment']
+                sentiment_counts[sentiment] = sentiment_counts.get(sentiment, 0) + 1
+            
+            flash(f'Analisis bulk berhasil! {total_processed} komentar telah diproses.', 'success')
+            
+            # Store results in session for display
+            session['bulk_results'] = results
+            session['bulk_summary'] = {
+                'total': len(results),
+                'positive': sentiment_counts.get('Positif', 0),
+                'negative': sentiment_counts.get('Negatif', 0),
+                'unknown': sentiment_counts.get('Tidak Diketahui', 0)
+            }
+            
+            return redirect(url_for('bulk_results'))
+            
+        except Exception as e:
+            print(f"Error processing CSV: {e}")
+            flash('Error saat memproses file CSV. Pastikan format file benar.', 'error')
+            return redirect(url_for('index'))
+            
+    except Exception as e:
+        print(f"Unexpected error in bulk_analyze: {e}")
+        flash('Terjadi kesalahan yang tidak terduga.', 'error')
+        return redirect(url_for('index'))
+
+@app.route('/bulk_results')
+def bulk_results():
+    """Display bulk analysis results"""
+    results = session.get('bulk_results', [])
+    summary = session.get('bulk_summary', {})
+    
+    if not results:
+        flash('Tidak ada hasil analisis bulk yang tersedia.', 'warning')
+        return redirect(url_for('index'))
+    
+    return render_template('bulk_results.html', results=results, summary=summary)
 
 def get_emotion_from_sentiment(sentiment):
     """Map sentiment to emotion"""

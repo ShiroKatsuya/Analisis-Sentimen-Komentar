@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hasil Analisis- Arianalyze</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <!-- Header Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white py-3 shadow-sm">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="{{ url_for('index') }}">
+                <div class="logo-circle me-2">
+                    <i class="fas fa-circle text-success"></i>
+                    <i class="fas fa-circle text-success ms-1"></i>
+                </div>
+                <span class="brand-text">Arianalyze</span>
+            </a>
+            
+            <div class="navbar-nav ms-auto">
+                {% if session.username %}
+                    <div class="dropdown">
+                        <button class="btn btn-outline-success dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            {{ session.username }}
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ url_for('logout') }}">Logout</a></li>
+                        </ul>
+                    </div>
+                {% else %}
+                    <a class="btn btn-success login-btn" href="{{ url_for('login') }}">Login</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mt-5">
+        <!-- Page Header -->
+        <div class="page-header mb-5">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="page-title mb-3">
+                        <i class="fas fa-chart-bar me-3 text-primary"></i>
+                        Hasil Analisis
+                    </h1>
+                    <p class="page-subtitle text-muted">
+                        Berikut adalah hasil analisis sentimen dari file CSV yang telah diupload
+                    </p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <a href="{{ url_for('index') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-arrow-left me-2"></i>
+                        Kembali ke Analisis
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Summary Statistics -->
+        <!--
+        <div class="summary-section mb-5">
+            <div class="row">
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="summary-card total">
+                        <div class="summary-icon">
+                            <i class="fas fa-chart-pie"></i>
+                        </div>
+                        <div class="summary-content">
+                            <div class="summary-number">{{ summary.total }}</div>
+                            <div class="summary-label">Total Data</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="summary-card positive">
+                        <div class="summary-icon">
+                            <i class="fas fa-smile"></i>
+                        </div>
+                        <div class="summary-content">
+                            <div class="summary-number">{{ summary.positive }}</div>
+                            <div class="summary-label">Positif</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6 mb-4">
+                    <div class="summary-card negative">
+                        <div class="summary-icon">
+                            <i class="fas fa-frown"></i>
+                        </div>
+                        <div class="summary-content">
+                            <div class="summary-number">{{ summary.negative }}</div>
+                            <div class="summary-label">Negatif</div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        -->
+        <!-- Results Table -->
+        <div class="results-section">
+            <div class="results-header mb-4">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <h3 class="results-title">
+                            <i class="fas fa-table me-2"></i>
+                            Detail Hasil Analisis
+                        </h3>
+                    </div>
+                    <div class="col-md-6 text-md-end">
+                        <div class="results-actions">
+                            <button class="btn btn-outline-success btn-sm" id="exportCsvBtn">
+                                <i class="fas fa-download me-1"></i>
+                                Export CSV
+                            </button>
+                            <button class="btn btn-outline-primary btn-sm" id="exportExcelBtn">
+                                <i class="fas fa-file-excel me-1"></i>
+                                Export Excel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover bulk-results-table">
+                    <thead class="table-light">
+                        <tr>
+                            <th>No</th>
+                            <th>Komentar</th>
+                            <th>Sentimen</th>
+                            <!-- <th>Confidence</th> - Kolom untuk menampilkan tingkat kepercayaan hasil klasifikasi (0-100%) -->
+                            <!-- <th>Status</th> - Kolom untuk menampilkan status proses analisis (Berhasil/Gagal) -->
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for result in results %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+                            <td>
+                                <div class="comment-text">
+                                    {{ result.comment[:100] }}{% if result.comment|length > 100 %}...{% endif %}
+                                </div>
+                                {% if result.comment|length > 100 %}
+                                <button class="btn btn-link btn-sm p-0 mt-1" 
+                                        onclick="showFullComment('{{ result.comment|replace("'", "\\'")|replace('"', '\\"') }}')">
+                                    Lihat selengkapnya
+                                </button>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge {{ 'bg-success' if result.sentiment == 'Positif' else 'bg-danger' if result.sentiment == 'Negatif' else 'bg-secondary' }}">
+                                    {{ result.sentiment }}
+                                </span>
+                            </td>
+                            <!--
+                            <td>
+                                {% if result.confidence %}
+                                    <div class="confidence-display">
+                                        <div class="confidence-bar">
+                                            <div class="confidence-fill" style="width: {{ (result.confidence * 100)|round(1) }}%"></div>
+                                        </div>
+                                        <small class="confidence-text">{{ (result.confidence * 100)|round(1) }}%</small>
+                                    </div>
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                    
+                            <td>
+                                <span class="badge {{ 'bg-success' if result.status == 'Berhasil' else 'bg-danger' }}">
+                                    {{ result.status }}
+                                </span>
+                            </td>
+                            -->
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-section mt-5 text-center">
+            <div class="row">
+                <div class="col-md-6">
+                    <a href="{{ url_for('index') }}" class="btn btn-primary btn-lg w-100 mb-3">
+                        <i class="fas fa-plus me-2"></i>
+                        Analisis Baru
+                    </a>
+                </div>
+                <div class="col-md-6">
+                    {% if session.username %}
+                    <a href="{{ url_for('hasil_klasifikasi') }}" class="btn btn-outline-success btn-lg w-100 mb-3">
+                        <i class="fas fa-chart-line me-2"></i>
+                        Lihat Semua Hasil
+                    </a>
+                    {% else %}
+                    <a href="{{ url_for('login') }}" class="btn btn-outline-success btn-lg w-100 mb-3">
+                        <i class="fas fa-sign-in-alt me-2"></i>
+                        Login untuk Lihat Semua
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Full Comment Modal -->
+    <div class="modal fade" id="fullCommentModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-comment me-2"></i>
+                        Komentar Lengkap
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="comment-content" id="fullCommentContent">
+                        <!-- Content will be populated here -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% include '_footer.html' %}
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JS -->
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    
+    <script>
+        function showFullComment(comment) {
+            document.getElementById('fullCommentContent').textContent = comment;
+            new bootstrap.Modal(document.getElementById('fullCommentModal')).show();
+        }
+        
+        // Export functionality
+        document.getElementById('exportCsvBtn').addEventListener('click', function() {
+            showNotification('Fitur export CSV akan segera tersedia', 'info');
+        });
+        
+        document.getElementById('exportExcelBtn').addEventListener('click', function() {
+            showNotification('Fitur export Excel akan segera tersedia', 'info');
+        });
+    </script>
+</body>
+</html>

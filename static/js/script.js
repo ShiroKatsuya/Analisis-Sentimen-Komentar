@@ -1,31 +1,42 @@
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.querySelector('.sentiment-form');
-    const commentFields = document.getElementById('commentFields');
-    const addCommentBtn = document.getElementById('addCommentBtn');
+    const commentInput = document.getElementById('comment');
+    const charCountElement = document.getElementById('charCount');
     const loadingAnimation = document.getElementById('loadingAnimation');
     const analyzeBtn = document.getElementById('analyzeBtn');
-    const totalCommentsElement = document.getElementById('totalComments');
     
-    let commentCounter = 1;
-    
-    // Initialize character counters for existing comment fields
-    initializeCommentFields();
-    
-    // Add new comment field
-    if (addCommentBtn) {
-        addCommentBtn.addEventListener('click', addNewCommentField);
+    // Auto-resize textarea and character counting
+    if (commentInput) {
+        commentInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = this.scrollHeight + 'px';
+            updateCharCounter();
+        });
+        
+        // Initialize character counter
+        updateCharCounter();
+        
+        function updateCharCounter() {
+            const charCount = commentInput.value.length;
+            if (charCountElement) {
+                charCountElement.textContent = charCount;
+                
+                // Change color based on character count
+                const counter = charCountElement.parentElement;
+                if (charCount > 450) {
+                    counter.style.color = '#dc3545'; // Red
+                } else if (charCount > 350) {
+                    counter.style.color = '#ffc107'; // Yellow
+                } else {
+                    counter.style.color = '#6c757d'; // Default gray
+                }
+            }
+        }
     }
     
     // Enhanced form submission with loading animation
     if (form) {
         form.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            // Validate form
-            if (!validateForm()) {
-                return;
-            }
-            
             // Show loading animation
             if (loadingAnimation) {
                 loadingAnimation.style.display = 'block';
@@ -42,9 +53,6 @@ document.addEventListener('DOMContentLoaded', function() {
             if (resultsContainer) {
                 resultsContainer.style.opacity = '0.5';
             }
-            
-            // Submit form
-            form.submit();
         });
     }
     
@@ -63,324 +71,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }, 100);
     }
-    
-    function initializeCommentFields() {
-        const textareas = document.querySelectorAll('.comment-input');
-        textareas.forEach(textarea => {
-            setupTextarea(textarea);
-        });
-        updateTotalComments();
-    }
-    
-    function setupTextarea(textarea) {
-        // Auto-resize textarea
-        textarea.addEventListener('input', function() {
-            this.style.height = 'auto';
-            this.style.height = this.scrollHeight + 'px';
-            updateCharCounter(this);
-        });
-        
-        // Initialize character counter
-        updateCharCounter(textarea);
-        
-        // Initialize height
-        textarea.style.height = 'auto';
-        textarea.style.height = textarea.scrollHeight + 'px';
-    }
-    
-    function addNewCommentField() {
-        commentCounter++;
-        const newCommentField = createCommentField(commentCounter);
-        commentFields.appendChild(newCommentField);
-        
-        // Setup the new textarea
-        const newTextarea = newCommentField.querySelector('.comment-input');
-        setupTextarea(newTextarea);
-        
-        // Show remove button for all fields except the first one
-        updateRemoveButtons();
-        
-        // Update total count
-        updateTotalComments();
-        
-        // Smooth scroll to new field
-        newCommentField.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        
-        // Focus on new textarea
-        setTimeout(() => {
-            newTextarea.focus();
-        }, 100);
-    }
-    
-    function createCommentField(id) {
-        const commentField = document.createElement('div');
-        commentField.className = 'comment-field mb-3';
-        commentField.setAttribute('data-comment-id', id);
-        
-        commentField.innerHTML = `
-            <div class="comment-input-wrapper">
-                <div class="comment-header d-flex justify-content-between align-items-center mb-2">
-                    <span class="comment-number">Komentar #${id}</span>
-                    <button type="button" class="btn btn-outline-danger btn-sm remove-comment-btn" 
-                            onclick="removeComment(this)">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
-                <textarea 
-                    class="form-control comment-input" 
-                    name="comments[]" 
-                    rows="3" 
-                    placeholder="Ketik komentar Anda di sini..."
-                    required></textarea>
-                <div class="comment-footer d-flex justify-content-between align-items-center mt-2">
-                    <div class="char-counter">
-                        <span class="char-count">0</span> karakter
-                    </div>
-                    <div class="comment-actions">
-                        <button type="button" class="btn btn-outline-secondary btn-sm copy-btn" 
-                                onclick="copyComment(this)">
-                            <i class="fas fa-copy me-1"></i>Copy
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        return commentField;
-    }
-    
-    function updateRemoveButtons() {
-        const removeButtons = document.querySelectorAll('.remove-comment-btn');
-        removeButtons.forEach((button, index) => {
-            if (index === 0) {
-                button.style.display = 'none'; // Hide for first comment
-            } else {
-                button.style.display = 'flex'; // Show for others
-            }
-        });
-    }
-    
-    function updateTotalComments() {
-        const totalComments = document.querySelectorAll('.comment-field').length;
-        if (totalCommentsElement) {
-            totalCommentsElement.textContent = totalComments;
-        }
-    }
-    
-    function validateForm() {
-        const textareas = document.querySelectorAll('.comment-input');
-        let isValid = true;
-        
-        textareas.forEach((textarea, index) => {
-            if (!textarea.value.trim()) {
-                isValid = false;
-                textarea.classList.add('is-invalid');
-                
-                // Add error message if not exists
-                if (!textarea.nextElementSibling || !textarea.nextElementSibling.classList.contains('invalid-feedback')) {
-                    const errorDiv = document.createElement('div');
-                    errorDiv.className = 'invalid-feedback';
-                    errorDiv.textContent = 'Komentar tidak boleh kosong';
-                    textarea.parentNode.appendChild(errorDiv);
-                }
-            } else {
-                textarea.classList.remove('is-invalid');
-                const errorDiv = textarea.parentNode.querySelector('.invalid-feedback');
-                if (errorDiv) {
-                    errorDiv.remove();
-                }
-            }
-        });
-        
-        if (!isValid) {
-            // Show error message
-            const errorAlert = document.createElement('div');
-            errorAlert.className = 'alert alert-danger alert-dismissible fade show mt-3';
-            errorAlert.innerHTML = `
-                <i class="fas fa-exclamation-triangle me-2"></i>
-                Mohon isi semua komentar sebelum menganalisis
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            `;
-            
-            // Remove existing error alerts
-            const existingAlerts = form.querySelectorAll('.alert-danger');
-            existingAlerts.forEach(alert => alert.remove());
-            
-            form.appendChild(errorAlert);
-            
-            // Scroll to first error
-            const firstError = form.querySelector('.is-invalid');
-            if (firstError) {
-                firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-        }
-        
-        return isValid;
-    }
 });
-
-// Global functions for onclick handlers
-
-// Global function to update character counter
-function updateCharCounter(textarea) {
-    const commentField = textarea.closest('.comment-field');
-    const charCountElement = commentField.querySelector('.char-count');
-    const charCount = textarea.value.length;
-    
-    if (charCountElement) {
-        charCountElement.textContent = charCount;
-        
-        // Change color based on character count
-        if (charCount > 450) {
-            charCountElement.style.color = '#dc3545'; // Red
-        } else if (charCount > 350) {
-            charCountElement.style.color = '#ffc107'; // Yellow
-        } else {
-            charCountElement.style.color = '#495057'; // Default
-        }
-    }
-}
-
-function removeComment(button) {
-    const commentField = button.closest('.comment-field');
-    const commentId = parseInt(commentField.getAttribute('data-comment-id'));
-    
-    // Add removal animation
-    commentField.style.transform = 'scale(0.8)';
-    commentField.style.opacity = '0';
-    
-    setTimeout(() => {
-        commentField.remove();
-        
-        // Renumber remaining comments
-        const remainingFields = document.querySelectorAll('.comment-field');
-        remainingFields.forEach((field, index) => {
-            const newId = index + 1;
-            field.setAttribute('data-comment-id', newId);
-            const numberSpan = field.querySelector('.comment-number');
-            if (numberSpan) {
-                numberSpan.textContent = `Komentar #${newId}`;
-            }
-        });
-        
-        // Update remove buttons visibility
-        const removeButtons = document.querySelectorAll('.remove-comment-btn');
-        removeButtons.forEach((btn, index) => {
-            if (index === 0) {
-                btn.style.display = 'none';
-            } else {
-                btn.style.display = 'flex';
-            }
-        });
-        
-        // Update total count
-        const totalCommentsElement = document.getElementById('totalComments');
-        if (totalCommentsElement) {
-            totalCommentsElement.textContent = remainingFields.length;
-        }
-        
-        // Update comment counter
-        if (window.commentCounter) {
-            window.commentCounter = remainingFields.length;
-        }
-    }, 300);
-}
-
-function copyComment(button) {
-    const commentField = button.closest('.comment-field');
-    const textarea = commentField.querySelector('.comment-input');
-    const text = textarea.value;
-    
-    if (text.trim()) {
-        navigator.clipboard.writeText(text).then(() => {
-            // Show success feedback
-            const originalText = button.innerHTML;
-            button.innerHTML = '<i class="fas fa-check me-1"></i>Copied!';
-            button.classList.remove('btn-outline-secondary');
-            button.classList.add('btn-success');
-            
-            setTimeout(() => {
-                button.innerHTML = originalText;
-                button.classList.remove('btn-success');
-                button.classList.add('btn-outline-secondary');
-            }, 2000);
-        }).catch(err => {
-            console.error('Failed to copy text: ', err);
-            // Fallback for older browsers
-            textarea.select();
-            document.execCommand('copy');
-        });
-    }
-}
-
-function resetForm() {
-    // Clear all comment fields except the first one
-    const commentFields = document.querySelectorAll('.comment-field');
-    commentFields.forEach((field, index) => {
-        if (index === 0) {
-            // Keep first field but clear content
-            const textarea = field.querySelector('.comment-input');
-            if (textarea) {
-                textarea.value = '';
-                textarea.style.height = 'auto';
-                updateCharCounter(textarea);
-            }
-        } else {
-            // Remove additional fields
-            field.remove();
-        }
-    });
-    
-    // Reset comment counter
-    if (window.commentCounter) {
-        window.commentCounter = 1;
-    }
-    
-    // Update total count
-    const totalCommentsElement = document.getElementById('totalComments');
-    if (totalCommentsElement) {
-        totalCommentsElement.textContent = '1';
-    }
-    
-    // Hide results
-    const resultsContainer = document.querySelector('.results-container');
-    if (resultsContainer) {
-        resultsContainer.style.display = 'none';
-    }
-    
-    // Reset remove buttons visibility
-    updateRemoveButtons();
-    
-    // Scroll smoothly to the top of the comment input form
-    const commentForm = document.querySelector('.sentiment-form');
-    if (commentForm) {
-        commentForm.scrollIntoView({ 
-            behavior: 'smooth', 
-            block: 'start',
-            inline: 'nearest'
-        });
-    }
-    
-    // Focus on first textarea after scrolling
-    setTimeout(() => {
-        const firstTextarea = document.querySelector('.comment-input');
-        if (firstTextarea) {
-            firstTextarea.focus();
-        }
-    }, 500); // Wait for scroll to complete
-}
-
-// Helper function to update remove buttons visibility
-function updateRemoveButtons() {
-    const removeButtons = document.querySelectorAll('.remove-comment-btn');
-    removeButtons.forEach((button, index) => {
-        if (index === 0) {
-            button.style.display = 'none';
-        } else {
-            button.style.display = 'flex';
-        }
-    });
-}
 
 function initializeTrendChart() {
     const trendBars = document.querySelectorAll('.trend-bar');
@@ -412,10 +103,8 @@ function updateTrendBars(data) {
         const negativePercent = total > 0 ? (data.negative / total) * 100 : 50;
         
         // Animate bars
-        setTimeout(() => {
-            positiveBar.style.height = `${Math.max(positivePercent * 0.6, 10)}px`;
-            negativeBar.style.height = `${Math.max(negativePercent * 0.6, 10)}px`;
-        }, 500);
+        positiveBar.style.width = positivePercent + '%';
+        negativeBar.style.width = negativePercent + '%';
     }
 }
 
@@ -546,4 +235,330 @@ function resetSubmitButton() {
         submitBtn.innerHTML = '<span class="btn-text">OK</span>';
         submitBtn.classList.remove('loading');
     }
+}
+
+// Bulk Classification Functionality
+document.addEventListener('DOMContentLoaded', function() {
+    initializeBulkClassification();
+});
+
+function initializeBulkClassification() {
+    const fileUploadArea = document.getElementById('fileUploadArea');
+    const csvFileInput = document.getElementById('csvFile');
+    const fileInfo = document.getElementById('fileInfo');
+    const fileName = document.getElementById('fileName');
+    const fileSize = document.getElementById('fileSize');
+    const removeFileBtn = document.getElementById('removeFile');
+    const commentColumnSelect = document.getElementById('commentColumn');
+    const bulkForm = document.getElementById('bulkForm');
+    const bulkAnalyzeBtn = document.getElementById('bulkAnalyzeBtn');
+    
+    if (!fileUploadArea || !csvFileInput) return;
+    
+    // File upload handling
+    csvFileInput.addEventListener('change', handleFileSelect);
+    
+    // Drag and drop functionality
+    fileUploadArea.addEventListener('dragover', handleDragOver);
+    fileUploadArea.addEventListener('dragleave', handleDragLeave);
+    fileUploadArea.addEventListener('drop', handleDrop);
+    
+    // Remove file button
+    if (removeFileBtn) {
+        removeFileBtn.addEventListener('click', removeFile);
+    }
+    
+    // Form submission
+    if (bulkForm) {
+        bulkForm.addEventListener('submit', handleBulkSubmit);
+    }
+    
+    function handleFileSelect(event) {
+        const file = event.target.files[0];
+        if (file && file.type === 'text/csv') {
+            displayFileInfo(file);
+            parseCSVHeaders(file);
+        }
+    }
+    
+    function handleDragOver(event) {
+        event.preventDefault();
+        fileUploadArea.classList.add('dragover');
+    }
+    
+    function handleDragLeave(event) {
+        event.preventDefault();
+        fileUploadArea.classList.remove('dragover');
+    }
+    
+    function handleDrop(event) {
+        event.preventDefault();
+        fileUploadArea.classList.remove('dragover');
+        
+        const files = event.dataTransfer.files;
+        if (files.length > 0) {
+            const file = files[0];
+            if (file.type === 'text/csv') {
+                csvFileInput.files = files;
+                displayFileInfo(file);
+                parseCSVHeaders(file);
+            } else {
+                showNotification('Hanya file CSV yang diperbolehkan', 'error');
+            }
+        }
+    }
+    
+    function displayFileInfo(file) {
+        fileName.textContent = file.name;
+        fileSize.textContent = formatFileSize(file.size);
+        fileInfo.style.display = 'flex';
+        fileUploadArea.style.display = 'none';
+    }
+    
+    function removeFile() {
+        csvFileInput.value = '';
+        fileInfo.style.display = 'none';
+        fileUploadArea.style.display = 'block';
+        commentColumnSelect.innerHTML = '<option value="">Pilih kolom...</option>';
+    }
+    
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+    
+    function parseCSVHeaders(file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const csv = e.target.result;
+                const lines = csv.split('\n');
+                const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+                
+                // Populate column selector
+                commentColumnSelect.innerHTML = '<option value="">Pilih kolom...</option>';
+                headers.forEach((header, index) => {
+                    if (header) {
+                        const option = document.createElement('option');
+                        option.value = index;
+                        option.textContent = header;
+                        commentColumnSelect.appendChild(option);
+                    }
+                });
+                
+                // Auto-select first column if it looks like a comment column
+                const commentKeywords = ['komentar', 'comment', 'text', 'teks', 'isi', 'content', 'pesan'];
+                const autoSelectIndex = headers.findIndex(header => 
+                    commentKeywords.some(keyword => 
+                        header.toLowerCase().includes(keyword)
+                    )
+                );
+                
+                if (autoSelectIndex !== -1) {
+                    commentColumnSelect.value = autoSelectIndex;
+                }
+                
+            } catch (error) {
+                console.error('Error parsing CSV:', error);
+                showNotification('Error parsing file CSV', 'error');
+            }
+        };
+        reader.readAsText(file);
+    }
+    
+    function handleBulkSubmit(event) {
+        event.preventDefault();
+        
+        const formData = new FormData(bulkForm);
+        const file = csvFileInput.files[0];
+        const commentColumn = commentColumnSelect.value;
+        
+        if (!file) {
+            showNotification('Pilih file CSV terlebih dahulu', 'error');
+            return;
+        }
+        
+        if (!commentColumn) {
+            showNotification('Pilih kolom komentar terlebih dahulu', 'error');
+            return;
+        }
+        
+        // Show progress container
+        showProgressContainer();
+        
+        // Disable form
+        bulkAnalyzeBtn.disabled = true;
+        bulkAnalyzeBtn.classList.add('loading');
+        
+        // Start bulk analysis
+        startBulkAnalysis(formData);
+    }
+}
+
+function showProgressContainer() {
+    const progressContainer = document.getElementById('bulkProgressContainer');
+    if (progressContainer) {
+        progressContainer.style.display = 'block';
+        progressContainer.scrollIntoView({ behavior: 'smooth' });
+    }
+}
+
+function startBulkAnalysis(formData) {
+    // Simulate progress for demo purposes
+    // In real implementation, this would make AJAX calls to the backend
+    
+    let progress = 0;
+    const progressBar = document.getElementById('bulkProgressBar');
+    const processedCount = document.getElementById('processedCount');
+    const remainingCount = document.getElementById('remainingCount');
+    const currentBatch = document.getElementById('currentBatch');
+    const totalBatches = document.getElementById('totalBatches');
+    
+    // Simulate processing
+    const totalItems = 150; // This would come from the CSV
+    let processed = 0;
+    
+    const interval = setInterval(() => {
+        processed += Math.floor(Math.random() * 10) + 1;
+        if (processed > totalItems) processed = totalItems;
+        
+        progress = (processed / totalItems) * 100;
+        
+        if (progressBar) progressBar.style.width = progress + '%';
+        if (processedCount) processedCount.textContent = processed;
+        if (remainingCount) remainingCount.textContent = totalItems - processed;
+        if (currentBatch) currentBatch.textContent = Math.ceil(processed / 100);
+        if (totalBatches) totalBatches.textContent = Math.ceil(totalItems / 100);
+        
+        if (progress >= 100) {
+            clearInterval(interval);
+            setTimeout(() => {
+                showBulkResults();
+                hideProgressContainer();
+                resetBulkForm();
+            }, 1000);
+        }
+    }, 200);
+}
+
+function showBulkResults() {
+    const resultsContainer = document.getElementById('bulkResultsContainer');
+    if (resultsContainer) {
+        resultsContainer.style.display = 'block';
+        resultsContainer.scrollIntoView({ behavior: 'smooth' });
+        
+        // Populate sample results
+        populateSampleResults();
+        updateSummaryCards();
+    }
+}
+
+function hideProgressContainer() {
+    const progressContainer = document.getElementById('bulkProgressContainer');
+    if (progressContainer) {
+        progressContainer.style.display = 'none';
+    }
+}
+
+function resetBulkForm() {
+    const bulkAnalyzeBtn = document.getElementById('bulkAnalyzeBtn');
+    if (bulkAnalyzeBtn) {
+        bulkAnalyzeBtn.disabled = false;
+        bulkAnalyzeBtn.classList.remove('loading');
+    }
+}
+
+function populateSampleResults() {
+    const tbody = document.getElementById('bulkResultsBody');
+    if (!tbody) return;
+    
+    // Sample data - in real implementation this would come from the backend
+    const sampleData = [
+        { comment: 'Produk sangat bagus dan berkualitas tinggi', sentiment: 'Positif', confidence: '0.95', status: 'Berhasil' },
+        { comment: 'Pelayanan kurang memuaskan', sentiment: 'Negatif', confidence: '0.87', status: 'Berhasil' },
+        { comment: 'Harga sesuai dengan kualitas', sentiment: 'Positif', confidence: '0.78', status: 'Berhasil' },
+        { comment: 'Pengiriman lambat', sentiment: 'Negatif', confidence: '0.82', status: 'Berhasil' },
+        { comment: 'Produk biasa saja', sentiment: 'Positif', confidence: '0.65', status: 'Berhasil' }
+    ];
+    
+    tbody.innerHTML = '';
+    sampleData.forEach((item, index) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${index + 1}</td>
+            <td>${item.comment}</td>
+            <td>
+                <span class="badge ${getSentimentBadgeClass(item.sentiment)}">
+                    ${item.sentiment}
+                </span>
+            </td>
+   
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+{/* <td>${(parseFloat(item.confidence) * 100).toFixed(1)}%</td>
+<td>
+    <span class="badge bg-success">${item.status}</span>
+</td> */}
+function getSentimentBadgeClass(sentiment) {
+    switch (sentiment) {
+        case 'Positif': return 'bg-success';
+        case 'Negatif': return 'bg-danger';
+        default: return 'bg-secondary';
+        
+    }
+}
+
+function updateSummaryCards() {
+    // Update summary counts - in real implementation these would come from actual results
+    document.getElementById('positiveCount').textContent = '3';
+    document.getElementById('negativeCount').textContent = '2';
+    document.getElementById('totalCount').textContent = '5';
+}
+
+function showNotification(message, type = 'info') {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    notification.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 5000);
+}
+
+// Export functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const exportCsvBtn = document.getElementById('exportCsvBtn');
+    const exportExcelBtn = document.getElementById('exportExcelBtn');
+    
+    if (exportCsvBtn) {
+        exportCsvBtn.addEventListener('click', exportToCSV);
+    }
+    
+    if (exportExcelBtn) {
+        exportExcelBtn.addEventListener('click', exportToExcel);
+    }
+});
+
+function exportToCSV() {
+    showNotification('Fitur export CSV akan segera tersedia', 'info');
+}
+
+function exportToExcel() {
+    showNotification('Fitur export Excel akan segera tersedia', 'info');
 }
