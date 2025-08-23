@@ -147,18 +147,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // Interactive illustration effects
-    const phoneScreen = document.querySelector('.phone-screen');
-    if (phoneScreen) {
-        phoneScreen.addEventListener('mouseenter', function() {
-            this.style.transform = 'scale(1.02)';
-            this.style.transition = 'transform 0.3s ease';
-        });
-        
-        phoneScreen.addEventListener('mouseleave', function() {
-            this.style.transform = 'scale(1)';
-        });
-    }
-    
+     
     // Security lock animation on click
     const securityLock = document.querySelector('.security-lock');
     if (securityLock) {

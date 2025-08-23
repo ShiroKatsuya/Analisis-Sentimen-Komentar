@@ -68,57 +68,89 @@ def sentimen_admin():
 
 @app.route('/analyze', methods=['POST'])
 def analyze():
-    """Handle comment submission and store in database"""
+    """Handle multiple comment submissions and store in database"""
     from database_models.models import Comment, SentimentAnalysis, db
     
-    comment_text = request.form.get('comment', '').strip()
+    # Get multiple comments from form
+    comments = request.form.getlist('comments[]')
     
-    if not comment_text:
+    if not comments or not any(comment.strip() for comment in comments):
         flash('Silakan masukkan komentar untuk dianalisis.', 'warning')
         return redirect(url_for('index'))
     
-    if len(comment_text) > 1000:
-        flash('Komentar terlalu panjang. Maksimal 1000 karakter.', 'warning')
+    # Filter out empty comments
+    valid_comments = [comment.strip() for comment in comments if comment.strip()]
+    
+    if not valid_comments:
+        flash('Silakan masukkan komentar untuk dianalisis.', 'warning')
         return redirect(url_for('index'))
     
-    # Perform sentiment analysis using FastAPI
-    sentiment_result, confidence_score = analyze_sentiment_with_api(comment_text)
+    # Check length for each comment
+    for comment in valid_comments:
+        if len(comment) > 1000:
+            flash(f'Komentar terlalu panjang. Maksimal 1000 karakter.', 'warning')
+            return redirect(url_for('index'))
     
-    # Create new comment record
-    comment = Comment(
-        content=comment_text,
-        sentiment_result=sentiment_result,
-        confidence_score=confidence_score,
-        ip_address=request.environ.get('REMOTE_ADDR'),
-        user_agent=request.headers.get('User-Agent'),
-        user_id=session.get('user_id')  # Will be None if not logged in
-    )
+    # Process each comment
+    analysis_results = []
+    all_comments_text = []
     
     try:
-        db.session.add(comment)
+        for comment_text in valid_comments:
+            # Perform sentiment analysis using FastAPI
+            sentiment_result, confidence_score = analyze_sentiment_with_api(comment_text)
+            
+            # Create new comment record
+            comment = Comment(
+                content=comment_text,
+                sentiment_result=sentiment_result,
+                confidence_score=confidence_score,
+                ip_address=request.environ.get('REMOTE_ADDR'),
+                user_agent=request.headers.get('User-Agent'),
+                user_id=session.get('user_id')  # Will be None if not logged in
+            )
+            
+            db.session.add(comment)
+            db.session.flush()  # Get the comment ID
+            
+            # Create sentiment analysis record
+            analysis = SentimentAnalysis(
+                comment_id=comment.id,
+                emotion_detected=get_emotion_from_sentiment(sentiment_result),
+                keywords=extract_keywords(comment_text),
+                confidence_score=confidence_score,
+                language_detected='id',
+                analysis_model='Naive Bayes Classifier v1.0',
+                processing_time=0.125
+            )
+            
+            db.session.add(analysis)
+            
+            # Store result for display
+            analysis_results.append({
+                'comment': comment_text,
+                'sentiment': sentiment_result,
+                'confidence': confidence_score
+            })
+            
+            all_comments_text.append(comment_text)
+        
+        # Commit all changes
         db.session.commit()
         
-
-        
-        analysis = SentimentAnalysis(
-            comment_id=comment.id,
-            emotion_detected=get_emotion_from_sentiment(sentiment_result),
-            keywords=extract_keywords(comment_text),
-            confidence_score=confidence_score,
-            language_detected='id',
-            analysis_model='Naive Bayes Classifier v1.0',
-            processing_time=0.125
-        )
-        
-        db.session.add(analysis)
-        db.session.commit()
-        
+        # Return individual results without combining them
         return render_template('index.html', 
-                             comment=comment_text, 
-                             sentiment_result=sentiment_result,
-                             show_result=True)
+                             comments=all_comments_text,
+                             comment='\n\n'.join(all_comments_text),  # For backward compatibility
+                             sentiment_result='Multiple',  # Just indicate multiple results
+                             confidence_score=None,  # No overall confidence
+                             show_result=True,
+                             analysis_results=analysis_results,
+                             total_comments=len(valid_comments))
+                             
     except Exception as e:
         db.session.rollback()
+        print(f"Error in analyze route: {e}")
         flash('Terjadi kesalahan saat menyimpan analisis.', 'error')
         return redirect(url_for('index'))
 

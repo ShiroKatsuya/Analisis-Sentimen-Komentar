@@ -1,42 +1,31 @@
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.querySelector('.sentiment-form');
-    const commentInput = document.getElementById('comment');
-    const charCountElement = document.getElementById('charCount');
+    const commentFields = document.getElementById('commentFields');
+    const addCommentBtn = document.getElementById('addCommentBtn');
     const loadingAnimation = document.getElementById('loadingAnimation');
     const analyzeBtn = document.getElementById('analyzeBtn');
+    const totalCommentsElement = document.getElementById('totalComments');
     
-    // Auto-resize textarea and character counting
-    if (commentInput) {
-        commentInput.addEventListener('input', function() {
-            this.style.height = 'auto';
-            this.style.height = this.scrollHeight + 'px';
-            updateCharCounter();
-        });
-        
-        // Initialize character counter
-        updateCharCounter();
-        
-        function updateCharCounter() {
-            const charCount = commentInput.value.length;
-            if (charCountElement) {
-                charCountElement.textContent = charCount;
-                
-                // Change color based on character count
-                const counter = charCountElement.parentElement;
-                if (charCount > 450) {
-                    counter.style.color = '#dc3545'; // Red
-                } else if (charCount > 350) {
-                    counter.style.color = '#ffc107'; // Yellow
-                } else {
-                    counter.style.color = '#6c757d'; // Default gray
-                }
-            }
-        }
+    let commentCounter = 1;
+    
+    // Initialize character counters for existing comment fields
+    initializeCommentFields();
+    
+    // Add new comment field
+    if (addCommentBtn) {
+        addCommentBtn.addEventListener('click', addNewCommentField);
     }
     
     // Enhanced form submission with loading animation
     if (form) {
         form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Validate form
+            if (!validateForm()) {
+                return;
+            }
+            
             // Show loading animation
             if (loadingAnimation) {
                 loadingAnimation.style.display = 'block';
@@ -53,6 +42,9 @@ document.addEventListener('DOMContentLoaded', function() {
             if (resultsContainer) {
                 resultsContainer.style.opacity = '0.5';
             }
+            
+            // Submit form
+            form.submit();
         });
     }
     
@@ -71,7 +63,324 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }, 100);
     }
+    
+    function initializeCommentFields() {
+        const textareas = document.querySelectorAll('.comment-input');
+        textareas.forEach(textarea => {
+            setupTextarea(textarea);
+        });
+        updateTotalComments();
+    }
+    
+    function setupTextarea(textarea) {
+        // Auto-resize textarea
+        textarea.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = this.scrollHeight + 'px';
+            updateCharCounter(this);
+        });
+        
+        // Initialize character counter
+        updateCharCounter(textarea);
+        
+        // Initialize height
+        textarea.style.height = 'auto';
+        textarea.style.height = textarea.scrollHeight + 'px';
+    }
+    
+    function addNewCommentField() {
+        commentCounter++;
+        const newCommentField = createCommentField(commentCounter);
+        commentFields.appendChild(newCommentField);
+        
+        // Setup the new textarea
+        const newTextarea = newCommentField.querySelector('.comment-input');
+        setupTextarea(newTextarea);
+        
+        // Show remove button for all fields except the first one
+        updateRemoveButtons();
+        
+        // Update total count
+        updateTotalComments();
+        
+        // Smooth scroll to new field
+        newCommentField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+        // Focus on new textarea
+        setTimeout(() => {
+            newTextarea.focus();
+        }, 100);
+    }
+    
+    function createCommentField(id) {
+        const commentField = document.createElement('div');
+        commentField.className = 'comment-field mb-3';
+        commentField.setAttribute('data-comment-id', id);
+        
+        commentField.innerHTML = `
+            <div class="comment-input-wrapper">
+                <div class="comment-header d-flex justify-content-between align-items-center mb-2">
+                    <span class="comment-number">Komentar #${id}</span>
+                    <button type="button" class="btn btn-outline-danger btn-sm remove-comment-btn" 
+                            onclick="removeComment(this)">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+                <textarea 
+                    class="form-control comment-input" 
+                    name="comments[]" 
+                    rows="3" 
+                    placeholder="Ketik komentar Anda di sini..."
+                    required></textarea>
+                <div class="comment-footer d-flex justify-content-between align-items-center mt-2">
+                    <div class="char-counter">
+                        <span class="char-count">0</span> karakter
+                    </div>
+                    <div class="comment-actions">
+                        <button type="button" class="btn btn-outline-secondary btn-sm copy-btn" 
+                                onclick="copyComment(this)">
+                            <i class="fas fa-copy me-1"></i>Copy
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        return commentField;
+    }
+    
+    function updateRemoveButtons() {
+        const removeButtons = document.querySelectorAll('.remove-comment-btn');
+        removeButtons.forEach((button, index) => {
+            if (index === 0) {
+                button.style.display = 'none'; // Hide for first comment
+            } else {
+                button.style.display = 'flex'; // Show for others
+            }
+        });
+    }
+    
+    function updateTotalComments() {
+        const totalComments = document.querySelectorAll('.comment-field').length;
+        if (totalCommentsElement) {
+            totalCommentsElement.textContent = totalComments;
+        }
+    }
+    
+    function validateForm() {
+        const textareas = document.querySelectorAll('.comment-input');
+        let isValid = true;
+        
+        textareas.forEach((textarea, index) => {
+            if (!textarea.value.trim()) {
+                isValid = false;
+                textarea.classList.add('is-invalid');
+                
+                // Add error message if not exists
+                if (!textarea.nextElementSibling || !textarea.nextElementSibling.classList.contains('invalid-feedback')) {
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'invalid-feedback';
+                    errorDiv.textContent = 'Komentar tidak boleh kosong';
+                    textarea.parentNode.appendChild(errorDiv);
+                }
+            } else {
+                textarea.classList.remove('is-invalid');
+                const errorDiv = textarea.parentNode.querySelector('.invalid-feedback');
+                if (errorDiv) {
+                    errorDiv.remove();
+                }
+            }
+        });
+        
+        if (!isValid) {
+            // Show error message
+            const errorAlert = document.createElement('div');
+            errorAlert.className = 'alert alert-danger alert-dismissible fade show mt-3';
+            errorAlert.innerHTML = `
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                Mohon isi semua komentar sebelum menganalisis
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            // Remove existing error alerts
+            const existingAlerts = form.querySelectorAll('.alert-danger');
+            existingAlerts.forEach(alert => alert.remove());
+            
+            form.appendChild(errorAlert);
+            
+            // Scroll to first error
+            const firstError = form.querySelector('.is-invalid');
+            if (firstError) {
+                firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+        
+        return isValid;
+    }
 });
+
+// Global functions for onclick handlers
+
+// Global function to update character counter
+function updateCharCounter(textarea) {
+    const commentField = textarea.closest('.comment-field');
+    const charCountElement = commentField.querySelector('.char-count');
+    const charCount = textarea.value.length;
+    
+    if (charCountElement) {
+        charCountElement.textContent = charCount;
+        
+        // Change color based on character count
+        if (charCount > 450) {
+            charCountElement.style.color = '#dc3545'; // Red
+        } else if (charCount > 350) {
+            charCountElement.style.color = '#ffc107'; // Yellow
+        } else {
+            charCountElement.style.color = '#495057'; // Default
+        }
+    }
+}
+
+function removeComment(button) {
+    const commentField = button.closest('.comment-field');
+    const commentId = parseInt(commentField.getAttribute('data-comment-id'));
+    
+    // Add removal animation
+    commentField.style.transform = 'scale(0.8)';
+    commentField.style.opacity = '0';
+    
+    setTimeout(() => {
+        commentField.remove();
+        
+        // Renumber remaining comments
+        const remainingFields = document.querySelectorAll('.comment-field');
+        remainingFields.forEach((field, index) => {
+            const newId = index + 1;
+            field.setAttribute('data-comment-id', newId);
+            const numberSpan = field.querySelector('.comment-number');
+            if (numberSpan) {
+                numberSpan.textContent = `Komentar #${newId}`;
+            }
+        });
+        
+        // Update remove buttons visibility
+        const removeButtons = document.querySelectorAll('.remove-comment-btn');
+        removeButtons.forEach((btn, index) => {
+            if (index === 0) {
+                btn.style.display = 'none';
+            } else {
+                btn.style.display = 'flex';
+            }
+        });
+        
+        // Update total count
+        const totalCommentsElement = document.getElementById('totalComments');
+        if (totalCommentsElement) {
+            totalCommentsElement.textContent = remainingFields.length;
+        }
+        
+        // Update comment counter
+        if (window.commentCounter) {
+            window.commentCounter = remainingFields.length;
+        }
+    }, 300);
+}
+
+function copyComment(button) {
+    const commentField = button.closest('.comment-field');
+    const textarea = commentField.querySelector('.comment-input');
+    const text = textarea.value;
+    
+    if (text.trim()) {
+        navigator.clipboard.writeText(text).then(() => {
+            // Show success feedback
+            const originalText = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-check me-1"></i>Copied!';
+            button.classList.remove('btn-outline-secondary');
+            button.classList.add('btn-success');
+            
+            setTimeout(() => {
+                button.innerHTML = originalText;
+                button.classList.remove('btn-success');
+                button.classList.add('btn-outline-secondary');
+            }, 2000);
+        }).catch(err => {
+            console.error('Failed to copy text: ', err);
+            // Fallback for older browsers
+            textarea.select();
+            document.execCommand('copy');
+        });
+    }
+}
+
+function resetForm() {
+    // Clear all comment fields except the first one
+    const commentFields = document.querySelectorAll('.comment-field');
+    commentFields.forEach((field, index) => {
+        if (index === 0) {
+            // Keep first field but clear content
+            const textarea = field.querySelector('.comment-input');
+            if (textarea) {
+                textarea.value = '';
+                textarea.style.height = 'auto';
+                updateCharCounter(textarea);
+            }
+        } else {
+            // Remove additional fields
+            field.remove();
+        }
+    });
+    
+    // Reset comment counter
+    if (window.commentCounter) {
+        window.commentCounter = 1;
+    }
+    
+    // Update total count
+    const totalCommentsElement = document.getElementById('totalComments');
+    if (totalCommentsElement) {
+        totalCommentsElement.textContent = '1';
+    }
+    
+    // Hide results
+    const resultsContainer = document.querySelector('.results-container');
+    if (resultsContainer) {
+        resultsContainer.style.display = 'none';
+    }
+    
+    // Reset remove buttons visibility
+    updateRemoveButtons();
+    
+    // Scroll smoothly to the top of the comment input form
+    const commentForm = document.querySelector('.sentiment-form');
+    if (commentForm) {
+        commentForm.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'start',
+            inline: 'nearest'
+        });
+    }
+    
+    // Focus on first textarea after scrolling
+    setTimeout(() => {
+        const firstTextarea = document.querySelector('.comment-input');
+        if (firstTextarea) {
+            firstTextarea.focus();
+        }
+    }, 500); // Wait for scroll to complete
+}
+
+// Helper function to update remove buttons visibility
+function updateRemoveButtons() {
+    const removeButtons = document.querySelectorAll('.remove-comment-btn');
+    removeButtons.forEach((button, index) => {
+        if (index === 0) {
+            button.style.display = 'none';
+        } else {
+            button.style.display = 'flex';
+        }
+    });
+}
 
 function initializeTrendChart() {
     const trendBars = document.querySelectorAll('.trend-bar');
