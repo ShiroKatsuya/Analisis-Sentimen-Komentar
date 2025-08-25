@@ -93,8 +93,35 @@
                         {% endif %}
                     {% endwith %}
                     
+                    <!-- Input Mode Selector -->
+                    <div class="input-mode-selector mb-4" id="inputModeSelector">
+                        <h5 class="selector-title mb-3">Pilih Metode Input</h5>
+                        <div class="row g-3">
+                            <div class="col-12 col-md-6">
+                                <button type="button" class="option-card w-100" id="chooseSingle">
+                                    <div class="option-icon bg-success-subtle text-success"><i class="fas fa-comment"></i></div>
+                                    <div class="option-content">
+                                        <div class="option-title">Komentar Tunggal</div>
+                                        <div class="option-desc">Ketik satu komentar untuk dianalisis langsung</div>
+                                    </div>
+                                    <div class="option-cta"><i class="fas fa-arrow-right"></i></div>
+                                </button>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <button type="button" class="option-card w-100" id="chooseBulk">
+                                    <div class="option-icon bg-primary-subtle text-primary"><i class="fas fa-file-csv"></i></div>
+                                    <div class="option-content">
+                                        <div class="option-title">CSV (Bulk)</div>
+                                        <div class="option-desc">Upload CSV untuk analisis ratusan komentar</div>
+                                    </div>
+                                    <div class="option-cta"><i class="fas fa-arrow-right"></i></div>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Comment Input Form -->
-                    <form method="POST" action="{{ url_for('analyze') }}" class="sentiment-form" id="sentimentForm">
+                    <form method="POST" action="{{ url_for('analyze') }}" class="sentiment-form d-none" id="sentimentForm">
                         <div class="mb-3" style="width: 70%;">
                             <label for="comment" class="form-label">Masukan Komentar</label>
                             <textarea 
@@ -170,7 +197,7 @@
                     </div>
                     
                     <!-- CSV Bulk Classification Section -->
-                    <div class="bulk-classification-section mt-5">
+                    <div class="bulk-classification-section mt-5 d-none" id="bulkSection">
                         <div class="section-divider">
                             <span class="divider-line"></span>
                             <span class="divider-text">Atau</span>

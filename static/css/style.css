@@ -1347,3 +1347,74 @@ body {
     padding: 0.4rem 0.8rem;
     border-radius: 20px;
 }
+
+/* Input Mode Selector */
+.input-mode-selector {
+    background: #fff;
+    border-radius: 16px;
+    padding: 1.25rem;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+    border: 1px solid #eef1f4;
+}
+
+.selector-title {
+    font-weight: 600;
+    color: #334155;
+}
+
+.option-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: linear-gradient(180deg, #ffffff 0%, #fafbfc 100%);
+    border: 1px solid #e9eef3;
+    border-radius: 14px;
+    padding: 1rem 1.25rem;
+    transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+    cursor: pointer;
+}
+
+.option-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 24px rgba(16,24,40,0.08);
+    border-color: #cdd6df;
+}
+
+.option-icon {
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    border-radius: 10px;
+    font-size: 1.25rem;
+}
+
+.option-content .option-title {
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.option-content .option-desc {
+    font-size: .9rem;
+    color: #6b7280;
+}
+
+.option-cta {
+    margin-left: auto;
+    color: #94a3b8;
+}
+
+/* Show/Hide Transitions */
+.fade-section {
+    transition: opacity .25s ease, transform .25s ease;
+}
+
+.fade-section.hidden {
+    opacity: 0;
+    transform: translateY(-6px);
+}
+
+@media (max-width: 576px) {
+    .option-card { padding: .9rem 1rem; }
+    .option-icon { width: 40px; height: 40px; font-size: 1.1rem; }
+}

@@ -71,6 +71,36 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }, 100);
     }
+    // Input mode selector logic
+    const inputModeSelector = document.getElementById('inputModeSelector');
+    const chooseSingle = document.getElementById('chooseSingle');
+    const chooseBulk = document.getElementById('chooseBulk');
+    const singleForm = document.getElementById('sentimentForm');
+    const bulkSection = document.getElementById('bulkSection');
+
+    function showSection(section) {
+        // Hide both first
+        if (singleForm) singleForm.classList.add('d-none');
+        if (bulkSection) bulkSection.classList.add('d-none');
+
+        // Show requested
+        if (section === 'single' && singleForm) {
+            singleForm.classList.remove('d-none');
+            singleForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            if (commentInput) commentInput.focus();
+        }
+        if (section === 'bulk' && bulkSection) {
+            bulkSection.classList.remove('d-none');
+            bulkSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }
+
+    if (chooseSingle) {
+        chooseSingle.addEventListener('click', () => showSection('single'));
+    }
+    if (chooseBulk) {
+        chooseBulk.addEventListener('click', () => showSection('bulk'));
+    }
 });
 
 function initializeTrendChart() {
