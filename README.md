@@ -48,19 +48,33 @@ flask seed_user
 
 ## 3. Menjalankan Aplikasi
 
-Buka dua terminal terpisah dan jalankan perintah berikut di masing-masing terminal:
+### Cara Mudah (Direkomendasikan)
 
-### Terminal 1 (Aplikasi Utama)
+Gunakan script startup otomatis:
 
 ```bash
-python main.py
+python start_services.py
 ```
 
-### Terminal 2 (FastAPI Server)
+Script ini akan memulai kedua layanan secara otomatis dan memverifikasi bahwa keduanya berjalan dengan benar.
+
+### Cara Manual
+
+Jika Anda ingin menjalankan layanan secara manual, buka dua terminal terpisah dan jalankan perintah berikut di masing-masing terminal:
+
+#### Terminal 1 (FastAPI Server - Sentiment Analysis)
 
 ```bash
 python server.py
 ```
+
+#### Terminal 2 (Flask Application - Web Interface)
+
+```bash
+python app.py
+```
+
+**Penting:** Pastikan FastAPI server (server.py) berjalan terlebih dahulu sebelum menjalankan Flask application (app.py) untuk menghindari error "Terjadi kesalahan saat menyimpan hasil analisis."
 
 ## 4. Akses Aplikasi
 

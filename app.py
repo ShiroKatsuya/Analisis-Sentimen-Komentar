@@ -45,7 +45,7 @@ def analyze_sentiment_with_api(text):
     """Send text to FastAPI for sentiment analysis and return (sentiment, confidence)."""
     fastapi_url = "http://127.0.0.1:8888/predict_sentiment/"
     try:
-        response = requests.post(fastapi_url, json={"teks_baru": text})
+        response = requests.post(fastapi_url, json={"teks_baru": text}, timeout=10)
         response.raise_for_status()  # Raise an HTTPError for bad responses (4xx or 5xx)
         data = response.json()
         sentiment = data.get("sentiment")
@@ -55,6 +55,9 @@ def analyze_sentiment_with_api(text):
     except requests.exceptions.RequestException as e:
         print(f"Error connecting to FastAPI: {e}")
         # Return default values in case of API error
+        return "Tidak Diketahui", None
+    except Exception as e:
+        print(f"Unexpected error in sentiment analysis: {e}")
         return "Tidak Diketahui", None
     
 @app.route('/sentimen_admin')
@@ -69,7 +72,7 @@ def sentimen_admin():
 @app.route('/analyze', methods=['POST'])
 def analyze():
     """Handle comment submission and store in database"""
-    from database_models.models import Comment, SentimentAnalysis, db
+    from database_models.models import Comment, SentimentAnalysis
     
     comment_text = request.form.get('comment', '').strip()
     
@@ -109,31 +112,31 @@ def analyze():
     except Exception as e:
         db.session.rollback()
         print(f"Error saving comment: {e}")
+        print(f"Comment text: {comment_text}")
+        print(f"Sentiment result: {sentiment_result}")
+        print(f"Confidence score: {confidence_score}")
         flash('Terjadi kesalahan saat menyimpan hasil analisis.', 'error')
         return redirect(url_for('index'))
 
 @app.route('/bulk_analyze', methods=['POST'])
 def bulk_analyze():
     """Handle bulk CSV file upload and analysis"""
-    from database_models.models import Comment, db
+    from database_models.models import Comment
     
     try:
         # Check if file was uploaded
         if 'csv_file' not in request.files:
-            flash('Tidak ada file yang diupload.', 'error')
-            return redirect(url_for('index'))
+            return jsonify({'error': 'Tidak ada file yang diupload.'}), 400
         
         file = request.files['csv_file']
         
         # Check if file is selected
         if file.filename == '':
-            flash('Tidak ada file yang dipilih.', 'error')
-            return redirect(url_for('index'))
+            return jsonify({'error': 'Tidak ada file yang dipilih.'}), 400
         
         # Check file extension
         if not file.filename.lower().endswith('.csv'):
-            flash('Hanya file CSV yang diperbolehkan.', 'error')
-            return redirect(url_for('index'))
+            return jsonify({'error': 'Hanya file CSV yang diperbolehkan.'}), 400
         
         # Get form parameters
         comment_column = request.form.get('comment_column', '0')
@@ -149,23 +152,19 @@ def bulk_analyze():
             try:
                 comment_column_index = int(comment_column)
                 if comment_column_index >= len(df.columns):
-                    flash('Indeks kolom komentar tidak valid.', 'error')
-                    return redirect(url_for('index'))
+                    return jsonify({'error': 'Indeks kolom komentar tidak valid.'}), 400
             except ValueError:
-                flash('Indeks kolom komentar tidak valid.', 'error')
-                return redirect(url_for('index'))
+                return jsonify({'error': 'Indeks kolom komentar tidak valid.'}), 400
             
             # Get comments from the specified column
             comments = df.iloc[:, comment_column_index].dropna().astype(str).tolist()
             
             if not comments:
-                flash('Tidak ada komentar yang ditemukan dalam file CSV.', 'error')
-                return redirect(url_for('index'))
+                return jsonify({'error': 'Tidak ada komentar yang ditemukan dalam file CSV.'}), 400
             
             # Limit comments to prevent abuse
             max_comments = 1000
             if len(comments) > max_comments:
-                flash(f'File terlalu besar. Maksimal {max_comments} komentar yang dapat diproses.', 'warning')
                 comments = comments[:max_comments]
             
             # Process comments in batches
@@ -227,28 +226,26 @@ def bulk_analyze():
                 sentiment = result['sentiment']
                 sentiment_counts[sentiment] = sentiment_counts.get(sentiment, 0) + 1
             
-            flash(f'Analisis bulk berhasil! {total_processed} komentar telah diproses.', 'success')
-            
-            # Store results in session for display
-            session['bulk_results'] = results
-            session['bulk_summary'] = {
-                'total': len(results),
-                'positive': sentiment_counts.get('Positif', 0),
-                'negative': sentiment_counts.get('Negatif', 0),
-                'unknown': sentiment_counts.get('Tidak Diketahui', 0)
-            }
-            
-            return redirect(url_for('bulk_results'))
+            # Return JSON response with results
+            return jsonify({
+                'success': True,
+                'message': f'Analisis bulk berhasil! {total_processed} komentar telah diproses.',
+                'results': results,
+                'summary': {
+                    'total': len(results),
+                    'positive': sentiment_counts.get('Positif', 0),
+                    'negative': sentiment_counts.get('Negatif', 0),
+                    'unknown': sentiment_counts.get('Tidak Diketahui', 0)
+                }
+            })
             
         except Exception as e:
             print(f"Error processing CSV: {e}")
-            flash('Error saat memproses file CSV. Pastikan format file benar.', 'error')
-            return redirect(url_for('index'))
+            return jsonify({'error': 'Error saat memproses file CSV. Pastikan format file benar.'}), 400
             
     except Exception as e:
         print(f"Unexpected error in bulk_analyze: {e}")
-        flash('Terjadi kesalahan yang tidak terduga.', 'error')
-        return redirect(url_for('index'))
+        return jsonify({'error': 'Terjadi kesalahan yang tidak terduga.'}), 500
 
 @app.route('/bulk_results')
 def bulk_results():
@@ -286,7 +283,7 @@ def login():
 @app.route('/login', methods=['POST'])
 def login_post():
     """Handle login form submission with database authentication"""
-    from database_models.models import User, UserSession, db
+    from database_models.models import User, UserSession
     import secrets
     
     username = request.form.get('username', '').strip()
@@ -331,7 +328,7 @@ def login_post():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     """User registration"""
-    from database_models.models import User, db
+    from database_models.models import User
     
     if request.method == 'POST':
         username = request.form.get('username', '').strip()
@@ -371,7 +368,7 @@ def register():
 @app.route('/logout')
 def logout():
     """User logout"""
-    from database_models.models import UserSession, db
+    from database_models.models import UserSession
     
     # Deactivate user session in database
     if 'session_token' in session:
@@ -426,7 +423,7 @@ def export_csv():
 @app.route('/dashboard')
 def dashboard():
     """Dashboard page showing stats and recent comments"""
-    from database_models.models import Comment, db # Moved import here for scope
+    from database_models.models import Comment # Moved import here for scope
     
     # Get total comments
     total_comments = Comment.query.count()
@@ -451,7 +448,7 @@ def data_latih():
         flash('Silakan login terlebih dahulu.', 'warning')
         return redirect(url_for('login'))
     
-    from database_models.models import Comment_DataLatih, db # Import Comment model
+    from database_models.models import Comment_DataLatih # Import Comment model
     
     # Fetch all comments from the database
     comment_datalatihs = Comment_DataLatih.query.order_by(Comment_DataLatih.created_at.desc()).all()
@@ -481,7 +478,7 @@ def upload_data_latih():
             if 'komentar' not in df.columns or 'label' not in df.columns:
                 return jsonify(success=False, message='CSV must contain "komentar" and "label" columns.'), 400
             
-            from database_models.models import Comment_DataLatih, db # Import Comment model
+            from database_models.models import Comment_DataLatih # Import Comment model
             
             new_records_count = 0
             for index, row in df.iterrows():
@@ -527,7 +524,7 @@ def delete_comment(comment_id):
     if 'user_id' not in session:
         return jsonify(success=False, message='Unauthorized. Please log in.'), 401
     
-    from database_models.models import Comment, SentimentAnalysis, db
+    from database_models.models import Comment, SentimentAnalysis
     
     try:
         comment = Comment.query.get(comment_id)
@@ -558,7 +555,7 @@ def delete_comment_datalatih(comment_id):
     if 'user_id' not in session:
         return jsonify(success=False, message='Unauthorized. Please log in.'), 401
     
-    from database_models.models import Comment_DataLatih, SentimentAnalysis, db
+    from database_models.models import Comment_DataLatih, SentimentAnalysis
     
     try:
         comment = Comment_DataLatih.query.get(comment_id)
@@ -590,7 +587,7 @@ def hasil_klasifikasi():
         flash('Silakan login terlebih dahulu.', 'warning')
         return redirect(url_for('login'))
     
-    from database_models.models import Comment, db
+    from database_models.models import Comment
     
     # Base query: show both user's own comments and anonymous comments if user is logged in
     user_id = session.get('user_id')

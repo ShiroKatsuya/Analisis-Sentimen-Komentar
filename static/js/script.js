@@ -271,6 +271,21 @@ function initializeBulkClassification() {
     // Form submission
     if (bulkForm) {
         bulkForm.addEventListener('submit', handleBulkSubmit);
+        // Ensure form starts in clean state
+        bulkForm.reset();
+    }
+    
+    // Add backup click event listener to button
+    if (bulkAnalyzeBtn) {
+        bulkAnalyzeBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            handleBulkSubmit(e);
+        });
+        
+        // Ensure button starts in correct state
+        bulkAnalyzeBtn.disabled = false;
+        bulkAnalyzeBtn.style.pointerEvents = 'auto';
+        bulkAnalyzeBtn.style.cursor = 'pointer';
     }
     
     function handleFileSelect(event) {
@@ -369,33 +384,60 @@ function initializeBulkClassification() {
         reader.readAsText(file);
     }
     
-    function handleBulkSubmit(event) {
-        event.preventDefault();
-        
-        const formData = new FormData(bulkForm);
-        const file = csvFileInput.files[0];
-        const commentColumn = commentColumnSelect.value;
-        
-        if (!file) {
-            showNotification('Pilih file CSV terlebih dahulu', 'error');
-            return;
-        }
-        
-        if (!commentColumn) {
-            showNotification('Pilih kolom komentar terlebih dahulu', 'error');
-            return;
-        }
-        
-        // Show progress container
-        showProgressContainer();
-        
-        // Disable form
-        bulkAnalyzeBtn.disabled = true;
-        bulkAnalyzeBtn.classList.add('loading');
-        
-        // Start bulk analysis
-        startBulkAnalysis(formData);
+}
+
+// Global flag to track if form is currently processing
+let isBulkFormProcessing = false;
+
+// Global function for handling bulk form submission
+function handleBulkSubmit(event) {
+    event.preventDefault();
+    
+    console.log('Bulk form submission triggered'); // Debug log
+    
+    // Prevent multiple submissions
+    if (isBulkFormProcessing) {
+        console.log('Form is already processing, ignoring submission');
+        return;
     }
+    
+    const bulkForm = document.getElementById('bulkForm');
+    const csvFileInput = document.getElementById('csvFile');
+    const commentColumnSelect = document.getElementById('commentColumn');
+    const bulkAnalyzeBtn = document.getElementById('bulkAnalyzeBtn');
+    
+    const formData = new FormData(bulkForm);
+    const file = csvFileInput.files[0];
+    const commentColumn = commentColumnSelect.value;
+    
+    if (!file) {
+        showNotification('Pilih file CSV terlebih dahulu', 'error');
+        return;
+    }
+    
+    if (!commentColumn) {
+        showNotification('Pilih kolom komentar terlebih dahulu', 'error');
+        return;
+    }
+    
+    // Check if button is already disabled
+    if (bulkAnalyzeBtn.disabled) {
+        console.log('Button is disabled, re-enabling...'); // Debug log
+        bulkAnalyzeBtn.disabled = false;
+    }
+    
+    // Show progress container
+    showProgressContainer();
+    
+    // Set processing flag
+    isBulkFormProcessing = true;
+    
+    // Disable form
+    bulkAnalyzeBtn.disabled = true;
+    bulkAnalyzeBtn.classList.add('loading');
+    
+    // Start bulk analysis
+    startBulkAnalysis(formData);
 }
 
 function showProgressContainer() {
@@ -407,52 +449,72 @@ function showProgressContainer() {
 }
 
 function startBulkAnalysis(formData) {
-    // Simulate progress for demo purposes
-    // In real implementation, this would make AJAX calls to the backend
-    
-    let progress = 0;
+    // Make actual API call to backend
     const progressBar = document.getElementById('bulkProgressBar');
     const processedCount = document.getElementById('processedCount');
     const remainingCount = document.getElementById('remainingCount');
     const currentBatch = document.getElementById('currentBatch');
     const totalBatches = document.getElementById('totalBatches');
     
-    // Simulate processing
-    const totalItems = 150; // This would come from the CSV
-    let processed = 0;
+    // Show initial progress
+    if (progressBar) progressBar.style.width = '0%';
+    if (processedCount) processedCount.textContent = '0';
+    if (remainingCount) remainingCount.textContent = 'Processing...';
+    if (currentBatch) currentBatch.textContent = '1';
+    if (totalBatches) totalBatches.textContent = '1';
     
-    const interval = setInterval(() => {
-        processed += Math.floor(Math.random() * 10) + 1;
-        if (processed > totalItems) processed = totalItems;
-        
-        progress = (processed / totalItems) * 100;
-        
-        if (progressBar) progressBar.style.width = progress + '%';
-        if (processedCount) processedCount.textContent = processed;
-        if (remainingCount) remainingCount.textContent = totalItems - processed;
-        if (currentBatch) currentBatch.textContent = Math.ceil(processed / 100);
-        if (totalBatches) totalBatches.textContent = Math.ceil(totalItems / 100);
-        
-        if (progress >= 100) {
-            clearInterval(interval);
+    // Make AJAX call to backend
+    fetch('/bulk_analyze', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            // Update progress to 100%
+            if (progressBar) progressBar.style.width = '100%';
+            if (processedCount) processedCount.textContent = data.summary.total;
+            if (remainingCount) remainingCount.textContent = '0';
+            
+            // Show success message
+            showNotification(data.message, 'success');
+            
+            // Show results
             setTimeout(() => {
-                showBulkResults();
+                showBulkResults(data.results, data.summary);
                 hideProgressContainer();
                 resetBulkForm();
             }, 1000);
+        } else {
+            throw new Error(data.error || 'Unknown error occurred');
         }
-    }, 200);
+    })
+    .catch(error => {
+        console.error('Error in bulk analysis:', error);
+        showNotification(error.message || 'Terjadi kesalahan saat analisis bulk', 'error');
+        hideProgressContainer();
+        resetBulkForm();
+    });
 }
 
-function showBulkResults() {
+function showBulkResults(results, summary) {
     const resultsContainer = document.getElementById('bulkResultsContainer');
     if (resultsContainer) {
         resultsContainer.style.display = 'block';
         resultsContainer.scrollIntoView({ behavior: 'smooth' });
         
         // Populate sample results
-        populateSampleResults();
-        updateSummaryCards();
+        populateSampleResults(results);
+        
+        // Add a small delay to ensure DOM elements are fully rendered
+        setTimeout(() => {
+            updateSummaryCards(summary);
+        }, 100);
     }
 }
 
@@ -464,19 +526,96 @@ function hideProgressContainer() {
 }
 
 function resetBulkForm() {
+    // Reset processing flag
+    isBulkFormProcessing = false;
+    
     const bulkAnalyzeBtn = document.getElementById('bulkAnalyzeBtn');
+    const bulkForm = document.getElementById('bulkForm');
+    const csvFileInput = document.getElementById('csvFile');
+    const fileUploadArea = document.getElementById('fileUploadArea');
+    const fileInfo = document.getElementById('fileInfo');
+    const commentColumnSelect = document.getElementById('commentColumn');
+    
+    // Reset button state
     if (bulkAnalyzeBtn) {
         bulkAnalyzeBtn.disabled = false;
         bulkAnalyzeBtn.classList.remove('loading');
+        
+        // Reset button text
+        const btnText = bulkAnalyzeBtn.querySelector('.btn-text');
+        if (btnText) {
+            btnText.innerHTML = '<i class="fas fa-play me-2"></i>Mulai Analisis Bulk';
+        }
+        
+        // Hide loading spinner
+        const loadingSpinner = bulkAnalyzeBtn.querySelector('.loading-spinner');
+        if (loadingSpinner) {
+            loadingSpinner.style.display = 'none';
+        }
     }
+    
+    // Reset form state
+    if (bulkForm) {
+        // Reset form to initial state
+        bulkForm.reset();
+        
+        // Ensure form submission is working by re-adding event listener
+        // Use a more robust approach to prevent any issues
+        bulkForm.removeEventListener('submit', handleBulkSubmit);
+        bulkForm.addEventListener('submit', handleBulkSubmit);
+        
+        // Also add a click event listener to the button as a backup
+        if (bulkAnalyzeBtn) {
+            bulkAnalyzeBtn.removeEventListener('click', handleBulkSubmit);
+            bulkAnalyzeBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                handleBulkSubmit(e);
+            });
+        }
+    }
+    
+    // Reset file input and display
+    if (csvFileInput) {
+        csvFileInput.value = '';
+        // Trigger change event to reset any internal state
+        csvFileInput.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    
+    if (fileUploadArea) {
+        fileUploadArea.style.display = 'block';
+    }
+    
+    if (fileInfo) {
+        fileInfo.style.display = 'none';
+    }
+    
+    // Reset column selector
+    if (commentColumnSelect) {
+        commentColumnSelect.innerHTML = '<option value="">Pilih kolom...</option>';
+    }
+    
+    // Force a small delay to ensure DOM updates are complete
+    setTimeout(() => {
+        // Double-check that the form is properly reset
+        if (bulkForm && bulkAnalyzeBtn) {
+            bulkAnalyzeBtn.disabled = false;
+            bulkForm.reset();
+            
+            // Ensure the button is clickable by removing any pointer-events restrictions
+            bulkAnalyzeBtn.style.pointerEvents = 'auto';
+            bulkAnalyzeBtn.style.cursor = 'pointer';
+            
+            console.log('Form reset completed, button should be clickable'); // Debug log
+        }
+    }, 100);
 }
 
-function populateSampleResults() {
+function populateSampleResults(results) {
     const tbody = document.getElementById('bulkResultsBody');
     if (!tbody) return;
     
-    // Sample data - in real implementation this would come from the backend
-    const sampleData = [
+    // Use real results from API if available, otherwise show sample data
+    const dataToShow = results && results.length > 0 ? results : [
         { comment: 'Produk sangat bagus dan berkualitas tinggi', sentiment: 'Positif', confidence: '0.95', status: 'Berhasil' },
         { comment: 'Pelayanan kurang memuaskan', sentiment: 'Negatif', confidence: '0.87', status: 'Berhasil' },
         { comment: 'Harga sesuai dengan kualitas', sentiment: 'Positif', confidence: '0.78', status: 'Berhasil' },
@@ -485,7 +624,7 @@ function populateSampleResults() {
     ];
     
     tbody.innerHTML = '';
-    sampleData.forEach((item, index) => {
+    dataToShow.forEach((item, index) => {
         const row = document.createElement('tr');
         row.innerHTML = `
             <td>${index + 1}</td>
@@ -495,7 +634,7 @@ function populateSampleResults() {
                     ${item.sentiment}
                 </span>
             </td>
-   
+      
         `;
         tbody.appendChild(row);
     });
@@ -514,11 +653,23 @@ function getSentimentBadgeClass(sentiment) {
     }
 }
 
-function updateSummaryCards() {
+function updateSummaryCards(summary) {
     // Update summary counts - in real implementation these would come from actual results
-    document.getElementById('positiveCount').textContent = '3';
-    document.getElementById('negativeCount').textContent = '2';
-    document.getElementById('totalCount').textContent = '5';
+    const positiveCountElement = document.getElementById('positiveCount');
+    const negativeCountElement = document.getElementById('negativeCount');
+    const totalCountElement = document.getElementById('totalCount');
+    
+    if (positiveCountElement) {
+        positiveCountElement.textContent = summary.positive || '0';
+    }
+    
+    if (negativeCountElement) {
+        negativeCountElement.textContent = summary.negative || '0';
+    }
+    
+    if (totalCountElement) {
+        totalCountElement.textContent = summary.total || '0';
+    }
 }
 
 function showNotification(message, type = 'info') {
